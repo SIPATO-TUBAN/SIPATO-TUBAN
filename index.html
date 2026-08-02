@@ -48,6 +48,23 @@
         .kartu-penyewa { border-top: 4px solid #007bff; }
         .kartu-admin { border-top: 4px solid #17a2b8; }
         .btn-menu { background-color: #6c757d; color: white; padding: 6px 14px; margin-bottom: 15px; }
+
+        /* --- Kalender ketersediaan --- */
+        .kalender-box { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px; background: #fafafa; }
+        .kalender-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .kalender-nav button { background: #eee; padding: 4px 12px; font-size: 16px; }
+        .kalender-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .kalender-header-hari { text-align: center; font-size: 11px; font-weight: bold; color: #888; padding: 4px 0; }
+        .kalender-hari { text-align: center; padding: 8px 0; border-radius: 5px; font-size: 13px; cursor: pointer; }
+        .kalender-hari-kosong { background: #d4edda; color: #155724; }
+        .kalender-hari-kosong:hover { background: #b7e0c1; }
+        .kalender-hari-ada { background: #f8d7da; color: #721c24; }
+        .kalender-hari-ada:hover { background: #f1b0b7; }
+        .kalender-hari-lewat { background: #eee; color: #aaa; cursor: not-allowed; }
+        .kalender-legenda { display: flex; gap: 15px; margin-top: 10px; font-size: 12px; color: #555; }
+        .kalender-legenda .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+        .dot-kosong { background: #28a745; }
+        .dot-ada { background: #dc3545; }
     </style>
 </head>
 <body>
@@ -109,6 +126,23 @@
             </div>
 
             <div class="harga-info" id="infoHarga"></div>
+
+            <div id="kalenderWrapper" style="display:none;">
+                <label>Cek Ketersediaan:</label>
+                <div class="kalender-box">
+                    <div class="kalender-nav">
+                        <button type="button" onclick="gantiBulanKalender(-1)">&lsaquo;</button>
+                        <strong id="kalenderJudulBulan"></strong>
+                        <button type="button" onclick="gantiBulanKalender(1)">&rsaquo;</button>
+                    </div>
+                    <div class="kalender-grid" id="kalenderGrid"></div>
+                    <div class="kalender-legenda">
+                        <span><span class="dot dot-kosong"></span>Tersedia (klik utk isi tanggal)</span>
+                        <span><span class="dot dot-ada"></span>Ada booking (klik utk lihat jam terpakai)</span>
+                    </div>
+                    <div id="kalenderDetailHari" style="display:none; margin-top:10px; font-size:13px;"></div>
+                </div>
+            </div>
 
             <label>Tanggal:</label> <input type="date" id="tanggal" required onchange="tampilkanInfoHarga()">
             <div style="display: flex; gap: 10px;">
@@ -373,6 +407,120 @@
         return jam * 60 + menit;
     }
 
+    // ================== KALENDER KETERSEDIAAN ==================
+    // Menampilkan kalender bulanan yang menandai tanggal mana yang sudah ada
+    // booking (merah) vs masih kosong (hijau) untuk lokasi (+ jenis lapangan
+    // kalau GOR) yang sedang dipilih penyewa - supaya tidak perlu coba-coba isi
+    // tanggal & jam dulu baru tahu bentrok atau tidak.
+    let kalenderBulanAktif = new Date().getMonth();   // 0-indexed
+    let kalenderTahunAktif = new Date().getFullYear();
+    const NAMA_BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const NAMA_HARI_PENDEK_ID = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+
+    function formatTanggalYMD(dateObj) {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function gantiBulanKalender(delta) {
+        kalenderBulanAktif += delta;
+        if (kalenderBulanAktif < 0) { kalenderBulanAktif = 11; kalenderTahunAktif--; }
+        if (kalenderBulanAktif > 11) { kalenderBulanAktif = 0; kalenderTahunAktif++; }
+        renderKalenderKetersediaan();
+    }
+
+    // Dipanggil tiap kali Lokasi / Jenis Lapangan berubah (lewat tampilkanInfoHarga).
+    // Menentukan apakah kalender perlu ditampilkan, dan reset ke bulan berjalan.
+    function tampilkanKalenderKetersediaan() {
+        const lokasi = document.getElementById('lokasi').value;
+        const jenisLapangan = document.getElementById('jenisLapangan').value;
+        const wrapper = document.getElementById('kalenderWrapper');
+
+        if (!lokasi) { wrapper.style.display = 'none'; return; }
+        if (lokasi === 'GOR Rangga Jaya Anoraga' && !jenisLapangan) { wrapper.style.display = 'none'; return; }
+
+        wrapper.style.display = 'block';
+        document.getElementById('kalenderDetailHari').style.display = 'none';
+        kalenderBulanAktif = new Date().getMonth();
+        kalenderTahunAktif = new Date().getFullYear();
+        renderKalenderKetersediaan();
+    }
+
+    function renderKalenderKetersediaan() {
+        const lokasi = document.getElementById('lokasi').value;
+        const jenisLapangan = document.getElementById('jenisLapangan').value;
+        if (!lokasi) return;
+        const resourceKey = lokasi + (jenisLapangan ? ' - ' + jenisLapangan : '');
+
+        document.getElementById('kalenderJudulBulan').textContent = `${NAMA_BULAN_ID[kalenderBulanAktif]} ${kalenderTahunAktif}`;
+
+        // Kumpulkan tanggal yang sudah ada booking untuk resource (lokasi+jenis lapangan) ini.
+        const tanggalTerpakai = {}; // { 'YYYY-MM-DD': [{mulai, selesai}, ...] }
+        daftarBookingTerakhir.forEach(function (b) {
+            if ((b.resourceKey || '') === resourceKey) {
+                if (!tanggalTerpakai[b.tanggal]) tanggalTerpakai[b.tanggal] = [];
+                tanggalTerpakai[b.tanggal].push({ mulai: b.mulai, selesai: b.selesai });
+            }
+        });
+
+        const grid = document.getElementById('kalenderGrid');
+        grid.innerHTML = '';
+        NAMA_HARI_PENDEK_ID.forEach(function (h) {
+            const el = document.createElement('div');
+            el.className = 'kalender-header-hari';
+            el.textContent = h;
+            grid.appendChild(el);
+        });
+
+        const jumlahHari = new Date(kalenderTahunAktif, kalenderBulanAktif + 1, 0).getDate();
+        const offsetHariPertama = new Date(kalenderTahunAktif, kalenderBulanAktif, 1).getDay(); // 0=Minggu
+        for (let i = 0; i < offsetHariPertama; i++) {
+            grid.appendChild(document.createElement('div'));
+        }
+
+        const hariIniStr = formatTanggalYMD(new Date());
+
+        for (let d = 1; d <= jumlahHari; d++) {
+            const tanggalStr = formatTanggalYMD(new Date(kalenderTahunAktif, kalenderBulanAktif, d));
+            const sel = document.createElement('div');
+            sel.className = 'kalender-hari';
+            sel.textContent = d;
+
+            if (tanggalStr < hariIniStr) {
+                sel.classList.add('kalender-hari-lewat');
+            } else if (tanggalTerpakai[tanggalStr]) {
+                sel.classList.add('kalender-hari-ada');
+                sel.onclick = function () { pilihTanggalDariKalender(tanggalStr, tanggalTerpakai[tanggalStr]); };
+            } else {
+                sel.classList.add('kalender-hari-kosong');
+                sel.onclick = function () { pilihTanggalDariKalender(tanggalStr, []); };
+            }
+            grid.appendChild(sel);
+        }
+    }
+
+    // Klik tanggal di kalender: otomatis isi field Tanggal, dan tampilkan detail
+    // jam yang sudah terpakai (kalau ada) supaya penyewa langsung tahu jam mana
+    // yang masih kosong tanpa perlu coba-coba submit.
+    function pilihTanggalDariKalender(tanggalStr, daftarJamTerpakai) {
+        document.getElementById('tanggal').value = tanggalStr;
+
+        const detail = document.getElementById('kalenderDetailHari');
+        if (daftarJamTerpakai.length === 0) {
+            detail.innerHTML = `<p style="color:#155724;">&#9989; Tanggal <strong>${tanggalStr}</strong> masih kosong sepenuhnya - jam berapa saja masih bisa dipilih (sesuai jam operasional di atas).</p>`;
+        } else {
+            const listJam = daftarJamTerpakai
+                .slice()
+                .sort(function (a, b) { return waktuKeMenit(a.mulai) - waktuKeMenit(b.mulai); })
+                .map(function (j) { return `${j.mulai} - ${j.selesai}`; })
+                .join(', ');
+            detail.innerHTML = `<p style="color:#721c24;">&#9888; Tanggal <strong>${tanggalStr}</strong> sudah ada booking jam <strong>${listJam}</strong>. Pilih jam di luar rentang itu.</p>`;
+        }
+        detail.style.display = 'block';
+    }
+
     function getHariInfo(tanggalStr) {
         const d = new Date(tanggalStr + 'T00:00:00');
         const hari = d.getDay(); // 0 = Minggu, 6 = Sabtu
@@ -431,6 +579,7 @@
         const lokasi = document.getElementById('lokasi').value;
         const jenisPenggunaan = document.getElementById('jenisPenggunaan').value;
         const info = document.getElementById('infoHarga');
+        tampilkanKalenderKetersediaan();
         if (!lokasi) { info.innerText = ''; return; }
 
         let teks = '';
