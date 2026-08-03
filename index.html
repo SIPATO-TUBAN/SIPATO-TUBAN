@@ -33,7 +33,7 @@
         .logo-header img { height: 90px; width: auto; }
         h2 { text-align: center; }
 
-        /* --- Landing / dashboard awal ---- */
+        /* --- Landing / dashboard awal --- */
         .landing-wrap { text-align: center; padding: 40px 0; }
         .landing-wrap p.subjudul { color: #666; margin-bottom: 30px; }
         .landing-pilihan { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
@@ -65,6 +65,15 @@
         .kalender-legenda .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
         .dot-kosong { background: #28a745; }
         .dot-ada { background: #dc3545; }
+
+        /* --- Statistik & Rekap Bulanan --- */
+        .statistik-card { background: #f4f4f4; border-radius: 8px; padding: 12px 18px; min-width: 150px; }
+        .statistik-card .angka { font-size: 22px; font-weight: bold; color: #007bff; }
+        .statistik-card .label { font-size: 12px; color: #666; }
+        .statistik-bar-row { margin-bottom: 12px; }
+        .statistik-bar-label { font-size: 13px; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 10px; }
+        .statistik-bar-bg { background: #eee; border-radius: 4px; height: 14px; overflow: hidden; }
+        .statistik-bar-fill { background: #17a2b8; height: 100%; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -92,6 +101,16 @@
 
     <!-- STEP 1: FORM BOOKING (khusus penyewa) -->
     <div class="box" id="formBox" style="display:none;">
+        <div class="box" id="cekStatusBox" style="margin-bottom:20px;">
+            <h3>&#128269; Cek Status Booking Anda</h3>
+            <p style="font-size:13px;color:#666;margin-top:-8px;">Sudah pernah booking? Masukkan nomor WhatsApp yang Anda pakai saat itu untuk lihat status permohonan Anda - tidak perlu chat admin.</p>
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+                <input type="tel" id="cekStatusWa" placeholder="Contoh: 081234567890" style="flex:1; margin-bottom:0;">
+                <button type="button" onclick="cekStatusBooking()" style="width:auto; padding:10px 20px; margin-top:0;">Cek Status</button>
+            </div>
+            <div id="hasilCekStatus"></div>
+        </div>
+
         <h3>Langkah 1: Data Booking &amp; Surat Permohonan</h3>
         <form id="bookingForm">
             <label>Nama:</label> <input type="text" id="nama" required>
@@ -167,6 +186,18 @@
         <button type="button" class="btn-download" id="btnDownload" style="display:none;" onclick="exportKeExcel()">Download Data (XLS/CSV)</button>
         <button type="button" class="btn-cancel" id="btnBersihkan" style="display:none;" onclick="bersihkanRiwayat()">&#129529; Bersihkan Riwayat (Tanggal Lewat)</button>
         <button type="button" class="btn-forward" id="btnAktifkanNotif" style="display:none;" onclick="mintaIzinNotifikasiDesktop()">&#128276; Aktifkan Notifikasi Desktop</button>
+
+        <div id="statistikBox" style="display:none;">
+            <h4>&#128202; Statistik &amp; Rekap Bulanan</h4>
+            <p style="font-size:12px;color:#888;margin-top:-8px;">Rekap ini dihitung dari data booking yang masih aktif di daftar (booking lama yang sudah dipindah lewat "Bersihkan Riwayat" tidak ikut terhitung di sini).</p>
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+                <label style="margin:0;">Bulan:</label>
+                <input type="month" id="statistikBulanInput" style="width:auto; margin:0;" onchange="renderStatistik()">
+            </div>
+            <div id="statistikRingkasan" style="display:flex; gap:15px; flex-wrap:wrap; margin-bottom:15px;"></div>
+            <div id="statistikPerLokasi"></div>
+        </div>
+
         <table>
             <thead>
                 <tr>
@@ -227,6 +258,15 @@
         hentikanPolling();
         idBookingDiketahui = new Set(); // reset supaya tidak notif "booking lama" saat login lagi
         hentikanKedipJudulTab();
+        resetCekStatusBooking();
+        form.reset(); // kosongkan form booking, jaga-jaga dipakai bergantian di device yang sama
+        // form.reset() cuma mengosongkan NILAI input/select - elemen dependen yang
+        // tampil/hilang berdasarkan pilihan sebelumnya (jenis lapangan, kalender,
+        // info harga) perlu disembunyikan manual juga supaya benar-benar bersih.
+        document.getElementById('jenisLapanganWrapper').style.display = 'none';
+        document.getElementById('jenisPenggunaanWrapper').style.display = 'none';
+        document.getElementById('kalenderWrapper').style.display = 'none';
+        document.getElementById('infoHarga').innerText = '';
     }
 
     function masukSebagaiPenyewa() {
@@ -236,10 +276,21 @@
         document.getElementById('btnDownload').style.display = 'none';
         document.getElementById('btnBersihkan').style.display = 'none';
         document.getElementById('btnAktifkanNotif').style.display = 'none';
+        document.getElementById('statistikBox').style.display = 'none';
         modeAksiAdmin = false;
         hentikanPolling();
+        resetCekStatusBooking(); // kosongkan sisa pencarian penyewa sebelumnya (device dipakai bergantian)
         muatSemuaBooking();
     }
+
+    // Kosongkan kotak nomor WA & hasil "Cek Status Booking" - dipanggil tiap kali
+    // masuk/keluar mode Penyewa, supaya sisa data pencarian orang sebelumnya
+    // (kalau device dipakai bergantian) tidak nyangkut kelihatan orang berikutnya.
+    function resetCekStatusBooking() {
+        document.getElementById('cekStatusWa').value = '';
+        document.getElementById('hasilCekStatus').innerHTML = '';
+    }
+
 
     async function masukSebagaiAdmin() {
         const password = prompt('Masukkan Password Admin:');
@@ -257,6 +308,11 @@
         document.getElementById('btnDownload').style.display = 'inline-block';
         document.getElementById('btnBersihkan').style.display = 'inline-block';
         document.getElementById('btnAktifkanNotif').style.display = 'inline-block';
+        document.getElementById('statistikBox').style.display = 'block';
+        // Default bulan yg ditampilkan: bulan berjalan (format YYYY-MM)
+        const skrg = new Date();
+        document.getElementById('statistikBulanInput').value =
+            `${skrg.getFullYear()}-${String(skrg.getMonth() + 1).padStart(2, '0')}`;
         perbaruiTombolNotif();
         muatSemuaBooking();
         mulaiPolling();
@@ -301,6 +357,7 @@
 
             daftarBookingTerakhir = data;
             renderTabel(data);
+            if (modeAksiAdmin) renderStatistik();
         } catch (err) {
             if (!background) {
                 tabelBody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#c0392b;">Gagal memuat data. Cek koneksi internet, atau pastikan URL Web App masih aktif.</td></tr>';
@@ -988,6 +1045,103 @@
         } else {
             alert(hasil.message || 'Gagal membersihkan riwayat.');
         }
+    }
+
+    // ================== CEK STATUS BOOKING (khusus Penyewa) ==================
+    // Supaya penyewa bisa lihat status booking-nya sendiri (tanpa perlu chat WA
+    // admin dulu) - cukup masukkan nomor WhatsApp yang dipakai saat booking.
+    // ================== STATISTIK & REKAP BULANAN (khusus Admin) ==================
+    function renderStatistik() {
+        const bulanInput = document.getElementById('statistikBulanInput').value; // format YYYY-MM
+        if (!bulanInput) return;
+
+        const dataBulan = daftarBookingTerakhir.filter(function (b) {
+            return String(b.tanggal || '').startsWith(bulanInput);
+        });
+
+        const totalBooking = dataBulan.length;
+        const totalPendapatan = dataBulan.reduce(function (s, b) { return s + (Number(b.totalHarga) || 0); }, 0);
+
+        document.getElementById('statistikRingkasan').innerHTML = `
+            <div class="statistik-card"><div class="angka">${totalBooking}</div><div class="label">Total Booking</div></div>
+            <div class="statistik-card"><div class="angka">${formatRupiah(totalPendapatan)}</div><div class="label">Total Nilai Booking Tercatat</div></div>
+        `;
+
+        // Rekap per lokasi: jumlah booking & total nilai, buat perbandingan bar
+        // sederhana (tanpa library chart, cukup CSS) supaya kelihatan lokasi mana
+        // yang paling sering dipakai.
+        const perLokasi = {};
+        dataBulan.forEach(function (b) {
+            if (!perLokasi[b.lokasi]) perLokasi[b.lokasi] = { jumlah: 0, pendapatan: 0 };
+            perLokasi[b.lokasi].jumlah++;
+            perLokasi[b.lokasi].pendapatan += Number(b.totalHarga) || 0;
+        });
+
+        const entriLokasi = Object.entries(perLokasi).sort(function (a, b) { return b[1].jumlah - a[1].jumlah; });
+        const maxJumlah = Math.max(1, ...entriLokasi.map(function (e) { return e[1].jumlah; }));
+
+        const targetDiv = document.getElementById('statistikPerLokasi');
+        if (entriLokasi.length === 0) {
+            targetDiv.innerHTML = '<p style="color:#777;font-size:13px;">Tidak ada booking pada bulan ini.</p>';
+            return;
+        }
+
+        targetDiv.innerHTML = entriLokasi.map(function ([lokasi, v]) {
+            const lebar = (v.jumlah / maxJumlah * 100).toFixed(0);
+            return `
+                <div class="statistik-bar-row">
+                    <div class="statistik-bar-label"><span>${lokasi}</span><span>${v.jumlah}x booking - ${formatRupiah(v.pendapatan)}</span></div>
+                    <div class="statistik-bar-bg"><div class="statistik-bar-fill" style="width:${lebar}%;"></div></div>
+                </div>`;
+        }).join('');
+    }
+
+    function cekStatusBooking() {
+        const inputWa = document.getElementById('cekStatusWa').value.trim();
+        const hasilBox = document.getElementById('hasilCekStatus');
+
+        if (!inputWa) {
+            hasilBox.innerHTML = '<p style="color:#c0392b;font-size:13px;">Masukkan nomor WhatsApp Anda dulu.</p>';
+            return;
+        }
+
+        const nomorDicari = formatNomorWA(inputWa);
+        const hasil = daftarBookingTerakhir.filter(function (b) {
+            return formatNomorWA(b.wa) === nomorDicari;
+        });
+
+        if (hasil.length === 0) {
+            hasilBox.innerHTML = '<p style="color:#856404;font-size:13px;">Tidak ditemukan booking dengan nomor WhatsApp tersebut. Cek kembali nomornya, atau mungkin booking Anda sudah masuk arsip (booking lama).</p>';
+            return;
+        }
+
+        // Urutkan dari yang tanggalnya paling baru/dekat dulu
+        hasil.sort(function (a, b) { return a.tanggal < b.tanggal ? 1 : -1; });
+
+        hasilBox.innerHTML = hasil.map(function (b) {
+            return `
+                <div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-top:10px;background:#fff;">
+                    <strong>${b.lokasi}${b.jenisLapangan ? ' - ' + b.jenisLapangan : ''}</strong><br>
+                    <span style="font-size:13px;color:#555;">${b.tanggal}, jam ${b.mulai} - ${b.selesai}</span><br>
+                    <div style="margin-top:8px;">${labelStatusUntukPenyewa(b)}</div>
+                    ${b.suratBalasanUrl ? `<button type="button" class="btn-lihat" style="margin-top:8px;" onclick="lihatDokumen('${b.suratBalasanUrl}')">Lihat Surat Balasan</button>` : ''}
+                </div>`;
+        }).join('');
+    }
+
+    // Terjemahkan status mentah (statusSurat/statusBalasan) jadi kalimat yang
+    // mudah dipahami penyewa awam, tanpa istilah teknis backend.
+    function labelStatusUntukPenyewa(b) {
+        if (b.statusBalasan === 'terkirim') {
+            return '<span style="color:#155724;">&#9989; Selesai - Surat balasan sudah dikirim ke WhatsApp Anda.</span>';
+        }
+        if (b.statusBalasan === 'diunggah') {
+            return '<span style="color:#155724;">&#128228; Surat balasan sudah siap, admin akan segera mengirimkannya ke WhatsApp Anda.</span>';
+        }
+        if (b.statusSurat === 'divalidasi') {
+            return '<span style="color:#856404;">&#128179; Disposisi Kepala Dinas sudah disetujui - silakan lanjutkan pembayaran sesuai instruksi yang dikirim admin via WhatsApp.</span>';
+        }
+        return '<span style="color:#555;">&#8987; Menunggu diproses admin (menunggu disposisi Kepala Dinas).</span>';
     }
 
     function renderTabel(data) {
