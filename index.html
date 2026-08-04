@@ -7,7 +7,7 @@
         body { font-family: sans-serif; margin: 20px; }
         .container { max-width: 1100px; margin: auto; }
         .box { border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        input, select { width: 100%; padding: 8px; margin: 5px 0 15px 0; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0 15px 0; box-sizing: border-box; font-family: inherit; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
         th { background-color: #f4f4f4; }
@@ -74,6 +74,24 @@
         .statistik-bar-label { font-size: 13px; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 10px; }
         .statistik-bar-bg { background: #eee; border-radius: 4px; height: 14px; overflow: hidden; }
         .statistik-bar-fill { background: #17a2b8; height: 100%; border-radius: 4px; }
+
+        /* --- Sistem Tab untuk Penyewa --- */
+        .tab-nav-penyewa { display: flex; gap: 2px; margin: 15px 0 0; border-bottom: 2px solid #ddd; overflow-x: auto; }
+        .tab-btn-penyewa {
+            background: #f4f4f4; border: 1px solid #ddd; border-bottom: none; color: #666;
+            padding: 10px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13.5px;
+            white-space: nowrap; position: relative; top: 2px; cursor: pointer;
+        }
+        .tab-btn-penyewa .tab-no { font-family: monospace; font-size: 11px; opacity: .6; margin-right: 5px; }
+        .tab-btn-penyewa.active { background: #fff; color: #007bff; border-bottom: 2px solid #fff; box-shadow: 0 -2px 0 #007bff inset; }
+        .tab-panel-penyewa { display: none; padding-top: 18px; }
+        .tab-panel-penyewa.active { display: block; }
+        .facility-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .chip {
+            font-size: 12.5px; font-weight: 600; padding: 7px 14px; border-radius: 20px;
+            border: 1px solid #ddd; background: #f4f4f4; cursor: pointer; color: #555;
+        }
+        .chip.active { background: #007bff; border-color: #007bff; color: #fff; }
     </style>
 </head>
 <body>
@@ -100,54 +118,22 @@
     </div>
 
     <!-- STEP 1: FORM BOOKING (khusus penyewa) -->
-    <div class="box" id="formBox" style="display:none;">
-        <div class="box" id="cekStatusBox" style="margin-bottom:20px;">
-            <h3>&#128269; Cek Status Booking Anda</h3>
-            <p style="font-size:13px;color:#666;margin-top:-8px;">Sudah pernah booking? Masukkan nomor WhatsApp yang Anda pakai saat itu untuk lihat status permohonan Anda - tidak perlu chat admin.</p>
-            <div style="display:flex; gap:10px; align-items:flex-start;">
-                <input type="tel" id="cekStatusWa" placeholder="Contoh: 081234567890" style="flex:1; margin-bottom:0;">
-                <button type="button" onclick="cekStatusBooking()" style="width:auto; padding:10px 20px; margin-top:0;">Cek Status</button>
-            </div>
-            <div id="hasilCekStatus"></div>
+    <!-- TAMPILAN PENYEWA: sistem tab (Kalender Ketersediaan | Ajukan Izin | Daftar Booking) -->
+    <div id="penyewaTabsBox" style="display:none;">
+        <button type="button" class="btn-menu" onclick="tampilkanLanding()">&larr; Kembali ke Menu</button>
+        <div class="tab-nav-penyewa">
+            <button type="button" class="tab-btn-penyewa active" id="tabBtnPenyewa1" onclick="gantiTabPenyewa(1)"><span class="tab-no">01</span> Kalender Ketersediaan</button>
+            <button type="button" class="tab-btn-penyewa" id="tabBtnPenyewa2" onclick="gantiTabPenyewa(2)"><span class="tab-no">02</span> Ajukan Izin</button>
+            <button type="button" class="tab-btn-penyewa" id="tabBtnPenyewa3" onclick="gantiTabPenyewa(3)"><span class="tab-no">03</span> Daftar Booking</button>
         </div>
 
-        <h3>Langkah 1: Data Booking &amp; Surat Permohonan</h3>
-        <form id="bookingForm">
-            <label>Nama:</label> <input type="text" id="nama" required>
-            <label>Alamat:</label> <input type="text" id="alamat" required>
-            <label>Nomor WhatsApp:</label> <input type="tel" id="wa" required>
-
-            <label>Pilih Lokasi:</label>
-            <select id="lokasi" required onchange="saatLokasiBerubah()">
-                <option value="" disabled selected>-- Pilih Lokasi Olahraga --</option>
-                <option>Stadion Tuban Sport Center</option>
-                <option>Stadion Loka Jaya</option>
-                <option>Lapangan Tennis Pemkab</option>
-                <option>Lapangan Tennis Indoor</option>
-                <option>GOR Rangga Jaya Anoraga</option>
-            </select>
-
-            <div id="jenisLapanganWrapper" style="display:none;">
-                <label>Jenis Lapangan (GOR Rangga Jaya Anoraga):</label>
-                <select id="jenisLapangan" onchange="tampilkanInfoHarga()">
-                    <option value="" disabled selected>-- Pilih Jenis Lapangan --</option>
-                    <option>Lapangan Badminton</option>
-                    <option>Lapangan Basket</option>
-                    <option>Lapangan Multifungsi</option>
-                </select>
-            </div>
-
-            <div id="jenisPenggunaanWrapper" style="display:none;">
-                <label>Jenis Penggunaan:</label>
-                <select id="jenisPenggunaan" onchange="tampilkanInfoHarga()">
-                    <option value="" disabled selected>-- Pilih Jenis Penggunaan --</option>
-                </select>
-            </div>
-
-            <div class="harga-info" id="infoHarga"></div>
-
-            <div id="kalenderWrapper" style="display:none;">
-                <label>Cek Ketersediaan:</label>
+        <!-- TAB 1: Kalender Ketersediaan (mandiri, tidak terikat form) -->
+        <div class="tab-panel-penyewa active" id="tabPanelPenyewa1">
+            <div class="box">
+                <h3>Kalender Ketersediaan Fasilitas</h3>
+                <p style="font-size:13px;color:#666;margin-top:-8px;">Cek jadwal sebelum mengajukan izin. Pilih fasilitas, lalu klik tanggal untuk lihat detail jam yang sudah terpakai.</p>
+                <div class="facility-select" id="chipLokasiList"></div>
+                <div class="facility-select" id="chipJenisLapanganList" style="display:none;"></div>
                 <div class="kalender-box">
                     <div class="kalender-nav">
                         <button type="button" onclick="gantiBulanKalender(-1)">&lsaquo;</button>
@@ -156,30 +142,90 @@
                     </div>
                     <div class="kalender-grid" id="kalenderGrid"></div>
                     <div class="kalender-legenda">
-                        <span><span class="dot dot-kosong"></span>Tersedia (klik utk isi tanggal)</span>
+                        <span><span class="dot dot-kosong"></span>Tersedia</span>
                         <span><span class="dot dot-ada"></span>Ada booking (klik utk lihat jam terpakai)</span>
                     </div>
                     <div id="kalenderDetailHari" style="display:none; margin-top:10px; font-size:13px;"></div>
                 </div>
             </div>
+        </div>
 
-            <label>Tanggal:</label> <input type="date" id="tanggal" required onchange="tampilkanInfoHarga()">
-            <div style="display: flex; gap: 10px;">
-                <div style="flex: 1;"><label>Mulai Jam:</label><input type="time" id="jamMulai" required onchange="tampilkanInfoHarga()"></div>
-                <div style="flex: 1;"><label>Selesai Jam:</label><input type="time" id="jamSelesai" required onchange="tampilkanInfoHarga()"></div>
+        <!-- TAB 2: Ajukan Izin (form booking + cek status) -->
+        <div class="tab-panel-penyewa" id="tabPanelPenyewa2">
+            <div class="box" id="cekStatusBox">
+                <h3>&#128269; Cek Status Booking Anda</h3>
+                <p style="font-size:13px;color:#666;margin-top:-8px;">Sudah pernah booking? Masukkan nomor WhatsApp yang Anda pakai saat itu untuk lihat status permohonan Anda - tidak perlu chat admin.</p>
+                <div style="display:flex; gap:10px; align-items:flex-start;">
+                    <input type="tel" id="cekStatusWa" placeholder="Contoh: 081234567890" style="flex:1; margin-bottom:0;">
+                    <button type="button" onclick="cekStatusBooking()" style="width:auto; padding:10px 20px; margin-top:0;">Cek Status</button>
+                </div>
+                <div id="hasilCekStatus"></div>
             </div>
 
-            <label>Upload Surat Permohonan Penyewaan (dari pemohon, untuk diajukan disposisi ke Kepala Dinas):</label>
-            <input type="file" id="suratPenyewa" accept="application/pdf,image/*" required>
-            <p style="font-size:12px;color:#777;margin-top:-12px;">Format PDF atau foto/scan surat, maksimal 3MB. Karena ini menyangkut sewa lahan/fasilitas milik pemerintah, surat ini perlu menunggu disposisi dari Kepala Dinas. Admin akan menghubungi Anda via WhatsApp untuk proses selanjutnya (termasuk arahan pembayaran).</p>
+            <div class="box">
+                <h3>Ajukan Izin: Data Booking &amp; Surat Permohonan</h3>
+                <form id="bookingForm">
+                    <label>Nama:</label> <input type="text" id="nama" required>
+                    <label>Alamat:</label> <input type="text" id="alamat" required>
+                    <label>Nomor WhatsApp:</label> <input type="tel" id="wa" required>
 
-            <button type="submit">Kirim Surat Permohonan</button>
-        </form>
+                    <label>Keperluan:</label>
+                    <textarea id="keperluan" rows="2" required placeholder="Contoh: Latihan rutin tim futsal RT 05 dalam rangka HUT RI"></textarea>
+
+                    <label>Pilih Lokasi:</label>
+                    <select id="lokasi" required onchange="saatLokasiBerubah()">
+                        <option value="" disabled selected>-- Pilih Lokasi Olahraga --</option>
+                        <option>Stadion Tuban Sport Center</option>
+                        <option>Stadion Loka Jaya</option>
+                        <option>Lapangan Tennis Pemkab</option>
+                        <option>Lapangan Tennis Indoor</option>
+                        <option>GOR Rangga Jaya Anoraga</option>
+                    </select>
+
+                    <div id="jenisLapanganWrapper" style="display:none;">
+                        <label>Jenis Lapangan (GOR Rangga Jaya Anoraga):</label>
+                        <select id="jenisLapangan" onchange="tampilkanInfoHarga()">
+                            <option value="" disabled selected>-- Pilih Jenis Lapangan --</option>
+                            <option>Lapangan Badminton</option>
+                            <option>Lapangan Basket</option>
+                            <option>Lapangan Multifungsi</option>
+                        </select>
+                    </div>
+
+                    <div id="jenisPenggunaanWrapper" style="display:none;">
+                        <label>Jenis Penggunaan:</label>
+                        <select id="jenisPenggunaan" onchange="tampilkanInfoHarga()">
+                            <option value="" disabled selected>-- Pilih Jenis Penggunaan --</option>
+                        </select>
+                    </div>
+
+                    <div class="harga-info" id="infoHarga"></div>
+
+                    <label>Tanggal:</label> <input type="date" id="tanggal" required onchange="tampilkanInfoHarga()">
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;"><label>Mulai Jam:</label><input type="time" id="jamMulai" required onchange="tampilkanInfoHarga()"></div>
+                        <div style="flex: 1;"><label>Selesai Jam:</label><input type="time" id="jamSelesai" required onchange="tampilkanInfoHarga()"></div>
+                    </div>
+
+                    <label>Upload Surat Permohonan Penyewaan (dari pemohon, untuk diajukan disposisi ke Kepala Dinas):</label>
+                    <input type="file" id="suratPenyewa" accept="application/pdf,image/*" required>
+                    <p style="font-size:12px;color:#777;margin-top:-12px;">Format PDF atau foto/scan surat, maksimal 3MB. Karena ini menyangkut sewa lahan/fasilitas milik pemerintah, surat ini perlu menunggu disposisi dari Kepala Dinas. Admin akan menghubungi Anda via WhatsApp untuk proses selanjutnya (termasuk arahan pembayaran).</p>
+
+                    <button type="submit">Kirim Surat Permohonan</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB 3: Daftar Booking (elemen aslinya dipindah ke sini lewat JS, lihat masukSebagaiPenyewa) -->
+        <div class="tab-panel-penyewa" id="tabPanelPenyewa3">
+            <div id="slotPenyewaTab3"></div>
+        </div>
     </div>
 
-    <!-- DAFTAR BOOKING: tampil untuk Penyewa maupun Admin. Kolom Aksi hanya aktif
-         (berisi tombol yang bisa mengubah data) kalau sedang login sebagai Admin;
-         kalau tidak, kolom itu hanya menampilkan tombol terkunci. -->
+    <!-- Slot tempat #daftarBookingBox "diparkir" saat mode Admin (elemen yang sama
+         dipindah ke sini atau ke #slotPenyewaTab3 lewat JS, tergantung mode aktif) -->
+    <div id="slotAdmin"></div>
+
     <div id="daftarBookingBox" style="display:none;">
         <button type="button" class="btn-menu" onclick="tampilkanLanding()">&larr; Kembali ke Menu</button>
         <h3>Daftar Booking</h3>
@@ -201,7 +247,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>No</th><th>Nama</th><th>Alamat</th><th>WA</th><th>Lokasi</th><th>Jenis Lapangan / Penggunaan</th>
+                    <th>No</th><th>Nama</th><th>Alamat</th><th>WA</th><th>Keperluan</th><th>Lokasi</th><th>Jenis Lapangan / Penggunaan</th>
                     <th>Tanggal</th><th>Jam</th><th>Durasi</th><th>Harga</th>
                     <th>Status Disposisi</th><th>Status Balasan</th><th>Aksi</th>
                 </tr>
@@ -251,7 +297,7 @@
     // Navigasi dashboard awal: landing -> pilih Penyewa atau Admin
     function tampilkanLanding() {
         document.getElementById('landingBox').style.display = 'block';
-        document.getElementById('formBox').style.display = 'none';
+        document.getElementById('penyewaTabsBox').style.display = 'none';
         document.getElementById('daftarBookingBox').style.display = 'none';
         sesiAdminPassword = null; // "logout" - password sesi dilupakan saat kembali ke menu
         modeAksiAdmin = false;
@@ -261,18 +307,17 @@
         resetCekStatusBooking();
         form.reset(); // kosongkan form booking, jaga-jaga dipakai bergantian di device yang sama
         // form.reset() cuma mengosongkan NILAI input/select - elemen dependen yang
-        // tampil/hilang berdasarkan pilihan sebelumnya (jenis lapangan, kalender,
-        // info harga) perlu disembunyikan manual juga supaya benar-benar bersih.
+        // tampil/hilang berdasarkan pilihan sebelumnya (jenis lapangan, info harga)
+        // perlu disembunyikan manual juga supaya benar-benar bersih.
         document.getElementById('jenisLapanganWrapper').style.display = 'none';
         document.getElementById('jenisPenggunaanWrapper').style.display = 'none';
-        document.getElementById('kalenderWrapper').style.display = 'none';
         document.getElementById('infoHarga').innerText = '';
+        gantiTabPenyewa(1); // reset ke tab pertama utk kunjungan berikutnya
     }
 
     function masukSebagaiPenyewa() {
         document.getElementById('landingBox').style.display = 'none';
-        document.getElementById('formBox').style.display = 'block';
-        document.getElementById('daftarBookingBox').style.display = 'block';
+        document.getElementById('penyewaTabsBox').style.display = 'block';
         document.getElementById('btnDownload').style.display = 'none';
         document.getElementById('btnBersihkan').style.display = 'none';
         document.getElementById('btnAktifkanNotif').style.display = 'none';
@@ -280,6 +325,14 @@
         modeAksiAdmin = false;
         hentikanPolling();
         resetCekStatusBooking(); // kosongkan sisa pencarian penyewa sebelumnya (device dipakai bergantian)
+        // Pindahkan elemen #daftarBookingBox (dipakai bersama Admin & Penyewa) ke
+        // dalam Tab 3 "Daftar Booking" - ini MEMINDAHKAN node yang sama (bukan
+        // menyalin), jadi semua fungsi/listener di dalamnya tetap jalan normal.
+        document.getElementById('slotPenyewaTab3').appendChild(document.getElementById('daftarBookingBox'));
+        document.getElementById('daftarBookingBox').style.display = 'block';
+        kalenderLokasiAktif = DAFTAR_LOKASI[0];
+        kalenderJenisLapanganAktif = null;
+        renderChipLokasi();
         muatSemuaBooking();
     }
 
@@ -291,6 +344,14 @@
         document.getElementById('hasilCekStatus').innerHTML = '';
     }
 
+    // Pindah antar tab di tampilan Penyewa (Kalender Ketersediaan / Ajukan Izin / Daftar Booking)
+    function gantiTabPenyewa(nomor) {
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById('tabBtnPenyewa' + i).classList.toggle('active', i === nomor);
+            document.getElementById('tabPanelPenyewa' + i).classList.toggle('active', i === nomor);
+        }
+        if (nomor === 1) renderKalenderKetersediaan(); // pastikan kalender ter-render fresh tiap dibuka
+    }
 
     async function masukSebagaiAdmin() {
         const password = prompt('Masukkan Password Admin:');
@@ -303,7 +364,10 @@
         sesiAdminPassword = password; // dipakai ulang otomatis utk aksi admin selama sesi ini
         modeAksiAdmin = true;
         document.getElementById('landingBox').style.display = 'none';
-        document.getElementById('formBox').style.display = 'none';
+        document.getElementById('penyewaTabsBox').style.display = 'none';
+        // Pindahkan #daftarBookingBox keluar dari tab Penyewa (kalau sebelumnya di
+        // sana) ke slot khusus Admin, di luar sistem tab.
+        document.getElementById('slotAdmin').appendChild(document.getElementById('daftarBookingBox'));
         document.getElementById('daftarBookingBox').style.display = 'block';
         document.getElementById('btnDownload').style.display = 'inline-block';
         document.getElementById('btnBersihkan').style.display = 'inline-block';
@@ -335,13 +399,13 @@
 
     async function muatSemuaBooking(background) {
         if (API_URL.includes('TEMPEL_URL_WEB_APP')) {
-            tabelBody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#c0392b;">&#9888; API_URL belum diisi. Buka file ini dengan editor teks, cari baris "const API_URL", lalu ganti dengan URL Web App Apps Script Anda.</td></tr>';
+            tabelBody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#c0392b;">&#9888; API_URL belum diisi. Buka file ini dengan editor teks, cari baris "const API_URL", lalu ganti dengan URL Web App Apps Script Anda.</td></tr>';
             return;
         }
         // `background=true` dipakai saat polling otomatis (tiap 30 detik) supaya
         // tabel tidak "berkedip" ke tulisan "Memuat data..." tiap kali refresh diam-diam.
         if (!background) {
-            tabelBody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#777;">Memuat data...</td></tr>';
+            tabelBody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#777;">Memuat data...</td></tr>';
         }
         try {
             const res = await fetch(API_URL);
@@ -360,7 +424,7 @@
             if (modeAksiAdmin) renderStatistik();
         } catch (err) {
             if (!background) {
-                tabelBody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#c0392b;">Gagal memuat data. Cek koneksi internet, atau pastikan URL Web App masih aktif.</td></tr>';
+                tabelBody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#c0392b;">Gagal memuat data. Cek koneksi internet, atau pastikan URL Web App masih aktif.</td></tr>';
             }
             console.error(err);
         }
@@ -488,28 +552,52 @@
         renderKalenderKetersediaan();
     }
 
-    // Dipanggil tiap kali Lokasi / Jenis Lapangan berubah (lewat tampilkanInfoHarga).
-    // Menentukan apakah kalender perlu ditampilkan, dan reset ke bulan berjalan.
-    function tampilkanKalenderKetersediaan() {
-        const lokasi = document.getElementById('lokasi').value;
-        const jenisLapangan = document.getElementById('jenisLapangan').value;
-        const wrapper = document.getElementById('kalenderWrapper');
+    // Daftar lokasi & jenis lapangan GOR - dipakai utk render chip pilihan fasilitas di Tab 1.
+    const DAFTAR_LOKASI = ['Stadion Tuban Sport Center', 'Stadion Loka Jaya', 'Lapangan Tennis Pemkab', 'Lapangan Tennis Indoor', 'GOR Rangga Jaya Anoraga'];
+    const DAFTAR_JENIS_LAPANGAN_GOR = ['Lapangan Badminton', 'Lapangan Basket', 'Lapangan Multifungsi'];
+    let kalenderLokasiAktif = DAFTAR_LOKASI[0];
+    let kalenderJenisLapanganAktif = null;
 
-        if (!lokasi) { wrapper.style.display = 'none'; return; }
-        if (lokasi === 'GOR Rangga Jaya Anoraga' && !jenisLapangan) { wrapper.style.display = 'none'; return; }
+    // Render tombol pilihan fasilitas (chip) di Tab 1 "Kalender Ketersediaan".
+    function renderChipLokasi() {
+        const container = document.getElementById('chipLokasiList');
+        container.innerHTML = DAFTAR_LOKASI.map(function (lok) {
+            const aktif = lok === kalenderLokasiAktif ? ' active' : '';
+            return `<button type="button" class="chip${aktif}" onclick="pilihLokasiKalender('${lok.replace(/'/g, "\\'")}')">${lok}</button>`;
+        }).join('');
 
-        wrapper.style.display = 'block';
-        document.getElementById('kalenderDetailHari').style.display = 'none';
-        kalenderBulanAktif = new Date().getMonth();
-        kalenderTahunAktif = new Date().getFullYear();
+        const subContainer = document.getElementById('chipJenisLapanganList');
+        if (kalenderLokasiAktif === 'GOR Rangga Jaya Anoraga') {
+            subContainer.style.display = 'flex';
+            subContainer.innerHTML = DAFTAR_JENIS_LAPANGAN_GOR.map(function (j) {
+                const aktif = j === kalenderJenisLapanganAktif ? ' active' : '';
+                return `<button type="button" class="chip${aktif}" onclick="pilihJenisLapanganKalender('${j}')">${j}</button>`;
+            }).join('');
+        } else {
+            subContainer.style.display = 'none';
+            subContainer.innerHTML = '';
+        }
         renderKalenderKetersediaan();
     }
 
+    function pilihLokasiKalender(lok) {
+        kalenderLokasiAktif = lok;
+        kalenderJenisLapanganAktif = (lok === 'GOR Rangga Jaya Anoraga') ? DAFTAR_JENIS_LAPANGAN_GOR[0] : null;
+        kalenderBulanAktif = new Date().getMonth();
+        kalenderTahunAktif = new Date().getFullYear();
+        document.getElementById('kalenderDetailHari').style.display = 'none';
+        renderChipLokasi();
+    }
+
+    function pilihJenisLapanganKalender(j) {
+        kalenderJenisLapanganAktif = j;
+        document.getElementById('kalenderDetailHari').style.display = 'none';
+        renderChipLokasi();
+    }
+
     function renderKalenderKetersediaan() {
-        const lokasi = document.getElementById('lokasi').value;
-        const jenisLapangan = document.getElementById('jenisLapangan').value;
-        if (!lokasi) return;
-        const resourceKey = lokasi + (jenisLapangan ? ' - ' + jenisLapangan : '');
+        if (!kalenderLokasiAktif) return;
+        const resourceKey = kalenderLokasiAktif + (kalenderJenisLapanganAktif ? ' - ' + kalenderJenisLapanganAktif : '');
 
         document.getElementById('kalenderJudulBulan').textContent = `${NAMA_BULAN_ID[kalenderBulanAktif]} ${kalenderTahunAktif}`;
 
@@ -558,24 +646,38 @@
         }
     }
 
-    // Klik tanggal di kalender: otomatis isi field Tanggal, dan tampilkan detail
-    // jam yang sudah terpakai (kalau ada) supaya penyewa langsung tahu jam mana
-    // yang masih kosong tanpa perlu coba-coba submit.
+    // Klik tanggal di kalender (Tab 1): tampilkan detail jam yang sudah terpakai
+    // (kalau ada), plus tombol pintas utk lanjut ke Tab 2 "Ajukan Izin" dengan
+    // lokasi/jenis lapangan/tanggal yang sudah otomatis terisi.
     function pilihTanggalDariKalender(tanggalStr, daftarJamTerpakai) {
-        document.getElementById('tanggal').value = tanggalStr;
-
         const detail = document.getElementById('kalenderDetailHari');
+        let pesan;
         if (daftarJamTerpakai.length === 0) {
-            detail.innerHTML = `<p style="color:#155724;">&#9989; Tanggal <strong>${tanggalStr}</strong> masih kosong sepenuhnya - jam berapa saja masih bisa dipilih (sesuai jam operasional di atas).</p>`;
+            pesan = `<p style="color:#155724;">&#9989; Tanggal <strong>${tanggalStr}</strong> masih kosong sepenuhnya.</p>`;
         } else {
             const listJam = daftarJamTerpakai
                 .slice()
                 .sort(function (a, b) { return waktuKeMenit(a.mulai) - waktuKeMenit(b.mulai); })
                 .map(function (j) { return `${j.mulai} - ${j.selesai}`; })
                 .join(', ');
-            detail.innerHTML = `<p style="color:#721c24;">&#9888; Tanggal <strong>${tanggalStr}</strong> sudah ada booking jam <strong>${listJam}</strong>. Pilih jam di luar rentang itu.</p>`;
+            pesan = `<p style="color:#721c24;">&#9888; Tanggal <strong>${tanggalStr}</strong> sudah ada booking jam <strong>${listJam}</strong>. Pilih jam di luar rentang itu.</p>`;
         }
+        pesan += `<button type="button" class="btn-forward" onclick="ajukanUntukTanggal('${tanggalStr}')">Ajukan Izin utk tanggal ini &rarr;</button>`;
+        detail.innerHTML = pesan;
         detail.style.display = 'block';
+    }
+
+    // Pintasan dari Tab 1 ke Tab 2: isi otomatis Lokasi/Jenis Lapangan/Tanggal
+    // di form "Ajukan Izin" sesuai yang sedang dilihat di kalender, lalu pindah tab.
+    function ajukanUntukTanggal(tanggalStr) {
+        document.getElementById('lokasi').value = kalenderLokasiAktif;
+        saatLokasiBerubah();
+        if (kalenderJenisLapanganAktif) {
+            document.getElementById('jenisLapangan').value = kalenderJenisLapanganAktif;
+        }
+        document.getElementById('tanggal').value = tanggalStr;
+        tampilkanInfoHarga();
+        gantiTabPenyewa(2);
     }
 
     function getHariInfo(tanggalStr) {
@@ -636,7 +738,6 @@
         const lokasi = document.getElementById('lokasi').value;
         const jenisPenggunaan = document.getElementById('jenisPenggunaan').value;
         const info = document.getElementById('infoHarga');
-        tampilkanKalenderKetersediaan();
         if (!lokasi) { info.innerText = ''; return; }
 
         let teks = '';
@@ -817,6 +918,7 @@
             nama: document.getElementById('nama').value,
             alamat: document.getElementById('alamat').value,
             wa: document.getElementById('wa').value,
+            keperluan: document.getElementById('keperluan').value,
             lokasi: lokasi,
             jenisLapangan: jenisLapangan,
             jenisPenggunaan: jenisPenggunaan,
@@ -1147,7 +1249,7 @@
     function renderTabel(data) {
         tabelBody.innerHTML = '';
         if (!data || data.length === 0) {
-            tabelBody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#777;">Belum ada data booking.</td></tr>';
+            tabelBody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#777;">Belum ada data booking.</td></tr>';
             return;
         }
 
@@ -1197,6 +1299,7 @@
                 <td>${b.nama}</td>
                 <td>${b.alamat}</td>
                 <td>${b.wa}</td>
+                <td>${b.keperluan || '-'}</td>
                 <td>${b.lokasi}</td>
                 <td>${jenisTampil}</td>
                 <td>${b.tanggal}</td>
