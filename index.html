@@ -171,6 +171,13 @@
                     <label>Alamat:</label> <input type="text" id="alamat" required>
                     <label>Nomor WhatsApp:</label> <input type="tel" id="wa" required>
 
+                    <label>Jabatan Pemohon:</label>
+                    <input type="text" id="jabatan" placeholder="Contoh: Ketua Umum, Manajer Klub, Kepala Unit">
+
+                    <label>Mengajukan Atas Nama Instansi/Lembaga/Klub? (opsional):</label>
+                    <input type="text" id="institusi" placeholder="Kosongkan jika perseorangan. Isi HURUF BESAR, contoh: BUMI WALI FC">
+                    <p style="font-size:12px;color:#777;margin-top:-12px;">Isian ini akan otomatis dipakai untuk menyusun surat izin resmi - jadi tidak perlu diisi ulang oleh admin nanti.</p>
+
                     <label>Keperluan:</label>
                     <textarea id="keperluan" rows="2" required placeholder="Contoh: Latihan rutin tim futsal RT 05 dalam rangka HUT RI"></textarea>
 
@@ -920,6 +927,8 @@
             nama: document.getElementById('nama').value,
             alamat: document.getElementById('alamat').value,
             wa: document.getElementById('wa').value,
+            jabatan: document.getElementById('jabatan').value,
+            institusi: document.getElementById('institusi').value,
             keperluan: document.getElementById('keperluan').value,
             lokasi: lokasi,
             jenisLapangan: jenisLapangan,
@@ -1088,14 +1097,16 @@
         if (nomorUrut === null) return;
         if (!nomorUrut.trim()) { alert('Nomor urut surat wajib diisi.'); return; }
 
-        const jabatan = prompt('Jabatan pemohon (contoh: "Ketua Umum", "Manajer Klub X"):', '');
+        const jabatanDefault = (b && b.jabatanPemohon) ? b.jabatanPemohon : '';
+        const jabatan = prompt('Jabatan pemohon (contoh: "Ketua Umum", "Manajer Klub X"):', jabatanDefault);
         if (jabatan === null) return;
 
+        const institusiDefault = (b && b.institusiPemohon) ? b.institusiPemohon : '';
         const institusi = prompt(
             'Nama instansi/lembaga/klub pemohon (kalau ada), HURUF BESAR sesuai gaya surat resmi.\n' +
             'Kosongkan (Cancel/OK tanpa isi) kalau pemohon perseorangan - surat akan otomatis pakai kalimat "dari Saudara/i [nama]".\n\n' +
             'Contoh: "BUMI WALI FC" atau "SMK NEGERI 1 TUBAN"',
-            ''
+            institusiDefault
         );
         if (institusi === null) return;
 
