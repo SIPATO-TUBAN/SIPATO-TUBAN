@@ -1091,6 +1091,19 @@
         const jabatan = prompt('Jabatan pemohon (contoh: "Ketua Umum", "Manajer Klub X"):', '');
         if (jabatan === null) return;
 
+        const institusi = prompt(
+            'Nama instansi/lembaga/klub pemohon (kalau ada), HURUF BESAR sesuai gaya surat resmi.\n' +
+            'Kosongkan (Cancel/OK tanpa isi) kalau pemohon perseorangan - surat akan otomatis pakai kalimat "dari Saudara/i [nama]".\n\n' +
+            'Contoh: "BUMI WALI FC" atau "SMK NEGERI 1 TUBAN"',
+            ''
+        );
+        if (institusi === null) return;
+
+        let nomorSuratPermohonan = '';
+        if (institusi.trim()) {
+            nomorSuratPermohonan = prompt('Nomor surat permohonan dari ' + institusi.trim() + ' (kosongkan kalau tidak ada):', '') || '';
+        }
+
         const namaKegiatanDefault = (b && b.keperluan) ? b.keperluan : '';
         const namaKegiatan = prompt('Nama kegiatan yang akan dilaksanakan:', namaKegiatanDefault);
         if (namaKegiatan === null) return;
@@ -1105,6 +1118,8 @@
                 id, password,
                 nomorUrut: nomorUrut.trim(),
                 jabatan: jabatan.trim(),
+                institusi: institusi.trim(),
+                nomorSuratPermohonan: nomorSuratPermohonan.trim(),
                 namaKegiatan: namaKegiatan.trim()
             });
 
