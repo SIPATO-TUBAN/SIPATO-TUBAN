@@ -1091,8 +1091,8 @@
 
         const nomorUrut = prompt(
             'Nomor urut surat (bagian tengah nomor, sesuai buku agenda surat).\n' +
-            'Contoh: "21/9"\n\nHasil akhir nomor surat akan menjadi:\n' +
-            `400.4.11.3/[nomor ini]/414.112/${new Date().getFullYear()}`
+            'Contoh: "001"\n\nHasil akhir nomor surat akan menjadi:\n' +
+            `400.4.11.3/[nomor ini]/414.112.3/${new Date().getFullYear()}`
         );
         if (nomorUrut === null) return;
         if (!nomorUrut.trim()) { alert('Nomor urut surat wajib diisi.'); return; }
