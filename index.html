@@ -1070,8 +1070,60 @@
         }
     }
 
-    // Diklik admin kapan saja setelah disposisi diteruskan (biasanya setelah pembayaran
-    // dikonfirmasi manual via WA, di luar sistem ini) untuk mengunggah surat balasan resmi.
+    // Alternatif otomatis dari uploadSuratBalasan(): admin tidak perlu bikin surat
+    // manual di Word lalu upload - sistem yang menyusun & menandatangani (tempel
+    // gambar TTD) sendiri, admin cukum isi 3 hal yg memang tidak ada di data booking
+    // (nomor urut surat, jabatan pemohon, nama kegiatan), lalu PDF langsung jadi.
+    async function generateSuratBalasanOtomatis(id, tombolEl) {
+        const password = mintaPasswordAdmin('Masukkan Password Admin untuk generate surat balasan otomatis:');
+        if (password === null) return;
+
+        const b = daftarBookingTerakhir.find(x => x.id === id);
+
+        const nomorUrut = prompt(
+            'Nomor urut surat (bagian tengah nomor, sesuai buku agenda surat).\n' +
+            'Contoh: "21/9"\n\nHasil akhir nomor surat akan menjadi:\n' +
+            `400.4.11.3/[nomor ini]/414.112/${new Date().getFullYear()}`
+        );
+        if (nomorUrut === null) return;
+        if (!nomorUrut.trim()) { alert('Nomor urut surat wajib diisi.'); return; }
+
+        const jabatan = prompt('Jabatan pemohon (contoh: "Ketua Umum", "Manajer Klub X"):', '');
+        if (jabatan === null) return;
+
+        const namaKegiatanDefault = (b && b.keperluan) ? b.keperluan : '';
+        const namaKegiatan = prompt('Nama kegiatan yang akan dilaksanakan:', namaKegiatanDefault);
+        if (namaKegiatan === null) return;
+        if (!namaKegiatan.trim()) { alert('Nama kegiatan wajib diisi.'); return; }
+
+        const teksAsliTombol = tombolEl ? tombolEl.textContent : null;
+        if (tombolEl) { tombolEl.disabled = true; tombolEl.textContent = 'Membuat surat...'; }
+
+        try {
+            const hasil = await panggilAPI({
+                action: 'generateSuratBalasan',
+                id, password,
+                nomorUrut: nomorUrut.trim(),
+                jabatan: jabatan.trim(),
+                namaKegiatan: namaKegiatan.trim()
+            });
+
+            if (hasil.success) {
+                await muatSemuaBooking();
+                alert('Surat balasan berhasil dibuat otomatis.\n\nSilakan cek dulu isinya lewat tombol "Lihat Surat Balasan" sebelum dikirim ke pemohon.');
+            } else {
+                alert(hasil.message || 'Gagal membuat surat balasan otomatis (password salah?).');
+            }
+        } catch (err) {
+            alert('Gagal menghubungi server: ' + err.message);
+        } finally {
+            if (tombolEl) { tombolEl.disabled = false; tombolEl.textContent = teksAsliTombol; }
+        }
+    }
+
+    // Dipakai admin kapan saja setelah disposisi diteruskan (biasanya setelah pembayaran
+    // dikonfirmasi manual via WA, di luar sistem ini) untuk mengunggah surat balasan resmi
+    // secara MANUAL (dibuat sendiri di Word/aplikasi lain, lalu tinggal upload PDF/gambarnya).
     function uploadSuratBalasan(id) {
         const password = mintaPasswordAdmin('Masukkan Password Admin untuk mengunggah surat balasan akhir (sudah di-TTE Kepala Dinas):');
         if (password === null) return;
@@ -1283,7 +1335,8 @@
                     aksiHtml += `<button type="button" class="btn-forward" onclick="validasiKepalaDinas('${b.id}')">Validasi &amp; Kirim Instruksi Pembayaran</button>`;
                 }
                 if (b.statusSurat === 'divalidasi' && b.statusBalasan === 'na') {
-                    aksiHtml += `<button type="button" class="btn-balasan" onclick="uploadSuratBalasan('${b.id}')">Upload Surat Balasan Akhir</button>`;
+                    aksiHtml += `<button type="button" class="btn-forward" onclick="generateSuratBalasanOtomatis('${b.id}', this)">&#9889; Generate Surat Balasan Otomatis</button>`;
+                    aksiHtml += `<button type="button" class="btn-balasan" onclick="uploadSuratBalasan('${b.id}')">Upload Manual</button>`;
                 }
                 if (b.suratBalasanUrl) {
                     aksiHtml += `<button type="button" class="btn-lihat" onclick="lihatDokumen('${b.suratBalasanUrl}')">Lihat Surat Balasan</button>`;
