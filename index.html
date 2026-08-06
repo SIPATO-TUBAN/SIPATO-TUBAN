@@ -284,6 +284,21 @@
             <div id="statistikPerLokasi"></div>
         </div>
 
+        <div id="filterBookingBox" style="display:none;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:15px 0;">
+                <input type="text" id="cariBooking" placeholder="Cari nama atau lokasi..." style="flex:1; min-width:180px; margin:0;" oninput="terapkanFilterBooking()">
+                <select id="filterStatusBooking" style="width:auto; margin:0;" onchange="terapkanFilterBooking()">
+                    <option value="semua">Semua Status</option>
+                    <option value="menunggu">Menunggu Disposisi</option>
+                    <option value="menunggu_bayar">Menunggu Pembayaran</option>
+                    <option value="menunggu_verifikasi">Menunggu Verifikasi Bayar</option>
+                    <option value="lunas">Sudah Lunas</option>
+                    <option value="terkirim">Surat Balasan Terkirim</option>
+                </select>
+                <span id="jumlahHasilFilter" style="font-size:12px;color:#777;white-space:nowrap;"></span>
+            </div>
+        </div>
+
         <table>
             <thead>
                 <tr>
@@ -352,6 +367,7 @@
         hentikanKedipJudulTab();
         resetCekStatusBooking();
         resetPembayaranTab();
+        resetFilterBooking();
         form.reset(); // kosongkan form booking, jaga-jaga dipakai bergantian di device yang sama
         // form.reset() cuma mengosongkan NILAI input/select - elemen dependen yang
         // tampil/hilang berdasarkan pilihan sebelumnya (jenis lapangan, info harga)
@@ -369,6 +385,8 @@
         document.getElementById('btnBersihkan').style.display = 'none';
         document.getElementById('btnAktifkanNotif').style.display = 'none';
         document.getElementById('statistikBox').style.display = 'none';
+        document.getElementById('filterBookingBox').style.display = 'none';
+        resetFilterBooking();
         modeAksiAdmin = false;
         hentikanPolling();
         resetCekStatusBooking(); // kosongkan sisa pencarian penyewa sebelumnya (device dipakai bergantian)
@@ -428,6 +446,8 @@
         document.getElementById('btnBersihkan').style.display = 'inline-block';
         document.getElementById('btnAktifkanNotif').style.display = 'inline-block';
         document.getElementById('statistikBox').style.display = 'block';
+        document.getElementById('filterBookingBox').style.display = 'block';
+        resetFilterBooking();
         // Default bulan yg ditampilkan: bulan berjalan (format YYYY-MM)
         const skrg = new Date();
         document.getElementById('statistikBulanInput').value =
@@ -475,7 +495,7 @@
             idBookingDiketahui = new Set(data.map(b => b.id));
 
             daftarBookingTerakhir = data;
-            renderTabel(data);
+            terapkanFilterBooking();
             if (modeAksiAdmin) renderStatistik();
         } catch (err) {
             if (!background) {
@@ -1517,10 +1537,59 @@
         window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
     }
 
+    // ================== PENCARIAN & FILTER STATUS (khusus Admin) ==================
+    // Dipanggil tiap kali data baru dimuat (muatSemuaBooking) ATAU tiap kali admin
+    // mengetik di kotak cari / ganti dropdown status. Untuk mode Penyewa, kotak
+    // filter ini disembunyikan & selalu kosong ("semua"), jadi hasilnya otomatis
+    // sama seperti menampilkan seluruh data tanpa filter.
+    function cocokFilterStatus(b, filter) {
+        switch (filter) {
+            case 'menunggu':            return b.statusSurat === 'menunggu';
+            case 'menunggu_bayar':      return b.statusSurat === 'divalidasi' && b.statusBayar !== 'lunas' && b.statusBayar !== 'menunggu_verifikasi';
+            case 'menunggu_verifikasi': return b.statusBayar === 'menunggu_verifikasi';
+            case 'lunas':               return b.statusBayar === 'lunas';
+            case 'terkirim':            return b.statusBalasan === 'terkirim';
+            default:                    return true; // 'semua'
+        }
+    }
+
+    function terapkanFilterBooking() {
+        const kataKunci = (document.getElementById('cariBooking').value || '').trim().toLowerCase();
+        const filterStatus = document.getElementById('filterStatusBooking').value || 'semua';
+
+        const hasil = daftarBookingTerakhir.filter(function (b) {
+            const cocokKata = !kataKunci ||
+                (b.nama || '').toLowerCase().includes(kataKunci) ||
+                (b.lokasi || '').toLowerCase().includes(kataKunci);
+            return cocokKata && cocokFilterStatus(b, filterStatus);
+        });
+
+        const labelJumlah = document.getElementById('jumlahHasilFilter');
+        if (labelJumlah) {
+            labelJumlah.textContent = (kataKunci || filterStatus !== 'semua')
+                ? `Menampilkan ${hasil.length} dari ${daftarBookingTerakhir.length} booking`
+                : '';
+        }
+
+        renderTabel(hasil);
+    }
+
+    function resetFilterBooking() {
+        const inputCari = document.getElementById('cariBooking');
+        const selectStatus = document.getElementById('filterStatusBooking');
+        if (inputCari) inputCari.value = '';
+        if (selectStatus) selectStatus.value = 'semua';
+        const labelJumlah = document.getElementById('jumlahHasilFilter');
+        if (labelJumlah) labelJumlah.textContent = '';
+    }
+
     function renderTabel(data) {
         tabelBody.innerHTML = '';
         if (!data || data.length === 0) {
-            tabelBody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#777;">Belum ada data booking.</td></tr>';
+            const pesanKosong = daftarBookingTerakhir.length > 0
+                ? 'Tidak ada booking yang cocok dengan kata kunci/filter status.'
+                : 'Belum ada data booking.';
+            tabelBody.innerHTML = `<tr><td colspan="14" style="text-align:center;color:#777;">${pesanKosong}</td></tr>`;
             return;
         }
 
