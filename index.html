@@ -274,10 +274,11 @@
 
         <div id="statistikBox" style="display:none;">
             <h4>&#128202; Statistik &amp; Rekap Bulanan</h4>
-            <p style="font-size:12px;color:#888;margin-top:-8px;">Rekap ini dihitung dari data booking yang masih aktif di daftar (booking lama yang sudah dipindah lewat "Bersihkan Riwayat" tidak ikut terhitung di sini).</p>
+            <p style="font-size:12px;color:#888;margin-top:-8px;">Rekap dihitung dari SELURUH data booking (aktif + yang sudah diarsipkan lewat "Bersihkan Riwayat"), jadi tetap lengkap walau riwayat lama sudah dipindah.</p>
             <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
                 <label style="margin:0;">Bulan:</label>
                 <input type="month" id="statistikBulanInput" style="width:auto; margin:0;" onchange="renderStatistik()">
+                <button type="button" class="btn-lihat" style="width:auto;" onclick="muatUlangStatistik()">&#128260; Muat Ulang</button>
             </div>
             <div id="statistikRingkasan" style="display:flex; gap:15px; flex-wrap:wrap; margin-bottom:15px;"></div>
             <div id="statistikPerLokasi"></div>
@@ -325,6 +326,11 @@
     };
 
     let daftarBookingTerakhir = [];      // cache data terakhir dari server (dipakai utk cek bentrok & kirim WA)
+    // Cache terpisah utk Statistik & Rekap Bulanan: berisi booking AKTIF + ARSIP
+    // digabung (beda dgn daftarBookingTerakhir di atas yg cuma booking aktif),
+    // supaya rekap tetap terhitung walau booking lama sudah "Bersihkan Riwayat".
+    // null = belum pernah diambil, harus fetch dulu.
+    let daftarBookingUntukStatistik = null;
     let currentBookingIdBalasan = null;
     let passwordBalasanSementara = null;
 
@@ -1073,7 +1079,7 @@
     }
 
     // Nomor WA Admin/narahubung yang tampil di bar kontak bawah halaman Penyewa.
-    const NOMOR_WA_ADMIN = '6285857322185'; // +62 819-9799-3134
+    const NOMOR_WA_ADMIN = '6281997993134'; // +62 819-9799-3134
     function hubungiAdminWA() {
         const pesan = 'Halo Admin SI PATO, saya ada pertanyaan/kendala terkait perizinan pemakaian tempat olahraga.';
         window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
@@ -1278,6 +1284,7 @@
         const hasil = await panggilAPI({ action: 'bersihkanRiwayat', password });
         if (hasil.success) {
             alert(`Berhasil memindahkan ${hasil.jumlah} booking lama ke sheet arsip.`);
+            daftarBookingUntukStatistik = null; // data arsip berubah - paksa ambil ulang saat rekap dibuka lagi
             muatSemuaBooking();
         } else {
             alert(hasil.message || 'Gagal membersihkan riwayat.');
@@ -1287,19 +1294,44 @@
     // ================== CEK STATUS BOOKING (khusus Penyewa) ==================
     // Supaya penyewa bisa lihat status booking-nya sendiri (tanpa perlu chat WA
     // admin dulu) - cukup masukkan nomor WhatsApp yang dipakai saat booking.
+    // Tombol "Muat Ulang" - paksa ambil ulang data aktif+arsip dari server (mis. setelah
+    // ada booking baru masuk, atau sekadar mau memastikan rekap sudah paling baru).
+    function muatUlangStatistik() {
+        daftarBookingUntukStatistik = null;
+        renderStatistik();
+    }
+
     // ================== STATISTIK & REKAP BULANAN (khusus Admin) ==================
-    function renderStatistik() {
+    // Dihitung dari booking AKTIF + ARSIP digabung (lihat daftarBookingUntukStatistik),
+    // supaya booking lama yang sudah dipindah lewat "Bersihkan Riwayat" tetap ikut terhitung.
+    async function renderStatistik() {
         const bulanInput = document.getElementById('statistikBulanInput').value; // format YYYY-MM
         if (!bulanInput) return;
 
-        const dataBulan = daftarBookingTerakhir.filter(function (b) {
+        const targetRingkasan = document.getElementById('statistikRingkasan');
+        const targetDiv = document.getElementById('statistikPerLokasi');
+
+        if (daftarBookingUntukStatistik === null) {
+            targetRingkasan.innerHTML = '<p style="color:#777;font-size:13px;">Memuat data rekap (aktif + arsip)...</p>';
+            targetDiv.innerHTML = '';
+            try {
+                const res = await fetch(API_URL + '?sertakanArsip=1');
+                daftarBookingUntukStatistik = await res.json();
+            } catch (err) {
+                targetRingkasan.innerHTML = '<p style="color:#c0392b;font-size:13px;">Gagal memuat data rekap. Cek koneksi internet.</p>';
+                console.error(err);
+                return;
+            }
+        }
+
+        const dataBulan = daftarBookingUntukStatistik.filter(function (b) {
             return String(b.tanggal || '').startsWith(bulanInput);
         });
 
         const totalBooking = dataBulan.length;
         const totalPendapatan = dataBulan.reduce(function (s, b) { return s + (Number(b.totalHarga) || 0); }, 0);
 
-        document.getElementById('statistikRingkasan').innerHTML = `
+        targetRingkasan.innerHTML = `
             <div class="statistik-card"><div class="angka">${totalBooking}</div><div class="label">Total Booking</div></div>
             <div class="statistik-card"><div class="angka">${formatRupiah(totalPendapatan)}</div><div class="label">Total Nilai Booking Tercatat</div></div>
         `;
@@ -1317,7 +1349,6 @@
         const entriLokasi = Object.entries(perLokasi).sort(function (a, b) { return b[1].jumlah - a[1].jumlah; });
         const maxJumlah = Math.max(1, ...entriLokasi.map(function (e) { return e[1].jumlah; }));
 
-        const targetDiv = document.getElementById('statistikPerLokasi');
         if (entriLokasi.length === 0) {
             targetDiv.innerHTML = '<p style="color:#777;font-size:13px;">Tidak ada booking pada bulan ini.</p>';
             return;
