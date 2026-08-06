@@ -95,6 +95,7 @@
         }
         .btn-wa-kontak { background-color: #25D366; color: #fff; padding: 8px 16px; white-space: nowrap; font-weight: 600; }
         .btn-wa-kontak:hover { background-color: #1ebe57; }
+        .pembayaran-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-top: 12px; background: #fff; }
         .facility-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
         .chip {
             font-size: 12.5px; font-weight: 600; padding: 7px 14px; border-radius: 20px;
@@ -136,6 +137,7 @@
             <button type="button" class="tab-btn-penyewa active" id="tabBtnPenyewa1" onclick="gantiTabPenyewa(1)"><span class="tab-no">01</span> Kalender Ketersediaan</button>
             <button type="button" class="tab-btn-penyewa" id="tabBtnPenyewa2" onclick="gantiTabPenyewa(2)"><span class="tab-no">02</span> Ajukan Izin</button>
             <button type="button" class="tab-btn-penyewa" id="tabBtnPenyewa3" onclick="gantiTabPenyewa(3)"><span class="tab-no">03</span> Daftar Booking</button>
+            <button type="button" class="tab-btn-penyewa" id="tabBtnPenyewa4" onclick="gantiTabPenyewa(4)"><span class="tab-no">04</span> Pembayaran</button>
         </div>
 
         <!-- TAB 1: Kalender Ketersediaan (mandiri, tidak terikat form) -->
@@ -239,6 +241,19 @@
             <div id="slotPenyewaTab3"></div>
         </div>
 
+        <!-- TAB 4: Pembayaran (masukkan Kode Booking -> muncul QRIS sesuai lokasi -> upload bukti) -->
+        <div class="tab-panel-penyewa" id="tabPanelPenyewa4">
+            <div class="box">
+                <h3>&#128179; Pembayaran</h3>
+                <p style="font-size:13px;color:#666;margin-top:-8px;">Masukkan Kode Booking yang dikirimkan Admin lewat WhatsApp (setelah disposisi Kepala Dinas disetujui) untuk melihat QRIS pembayaran sesuai lokasi Anda.</p>
+                <div style="display:flex; gap:10px; align-items:flex-start;">
+                    <input type="text" id="kodeBookingBayar" placeholder="Tempel Kode Booking dari WhatsApp di sini" style="flex:1; margin-bottom:0;">
+                    <button type="button" onclick="cariBookingUntukBayar()" style="width:auto; padding:10px 20px; margin-top:0;">Cari</button>
+                </div>
+                <div id="hasilPembayaran"></div>
+            </div>
+        </div>
+
         <!-- Bar kontak Admin - selalu tampil di bawah, di tab manapun -->
         <div class="kontak-admin-bar">
             <span>&#10071; Ada kendala atau pertanyaan? Hubungi Admin langsung.</span>
@@ -295,18 +310,19 @@
     // Jam mulainya "malam" (24 jam). Sebelum jam ini dianggap siang/pagi-sore.
     const JAM_MALAM_MULAI = 18; // jam 18:00
 
-    // >>> GANTI info pembayaran di bawah ini dengan rekening/QRIS Anda sendiri <<<
-    // Ini HANYA teks yang disisipkan ke pesan WhatsApp ke penyewa setelah disposisi
-    // disetujui, supaya penyewa langsung tahu cara bayar (bukan menunggu chat susulan).
-    // Pembayaran tetap sepenuhnya di luar sistem ini (dicek manual oleh admin via
-    // WhatsApp), sesuai catatan di file Apps Script.
-    const INFO_PEMBAYARAN =
-        `Transfer Bank:\n` +
-        `Bank ................ (isi nama bank)\n` +
-        `No. Rekening ........ (isi nomor rekening)\n` +
-        `Atas Nama ........... (isi nama pemilik rekening)\n\n` +
-        `QRIS:\n` +
-        `(lampirkan/kirim gambar QRIS Anda pada chat WhatsApp ini setelah pesan terkirim)`;
+    // >>> WAJIB DIISI: ganti dengan URL GitHub Pages situs ini yang sedang aktif <<<
+    const URL_WEBSITE = "https://sipato-tuban.github.io/SIPATO-TUBAN/";
+
+    // Pemetaan lokasi -> file gambar QRIS. "Lapangan Tennis Indoor" dan "Lapangan
+    // Tennis Outdoor" SENGAJA memakai QRIS yang sama (qris-tennis.png), sesuai
+    // yang diinfokan - jadi cuma ada 4 file gambar QRIS walau lokasinya ada 5.
+    const QRIS_MAP = {
+        'Stadion Tuban Sport Center': 'qris-tsc.jpg',
+        'Stadion Loka Jaya': 'qris-lokajaya.jpg',
+        'Lapangan Tennis Outdoor': 'qris-tennis.jpg',
+        'Lapangan Tennis Indoor': 'qris-tennis.jpg',
+        'GOR Rangga Jaya Anoraga': 'qris-gor.jpg'
+    };
 
     let daftarBookingTerakhir = [];      // cache data terakhir dari server (dipakai utk cek bentrok & kirim WA)
     let currentBookingIdBalasan = null;
@@ -329,6 +345,7 @@
         idBookingDiketahui = new Set(); // reset supaya tidak notif "booking lama" saat login lagi
         hentikanKedipJudulTab();
         resetCekStatusBooking();
+        resetPembayaranTab();
         form.reset(); // kosongkan form booking, jaga-jaga dipakai bergantian di device yang sama
         // form.reset() cuma mengosongkan NILAI input/select - elemen dependen yang
         // tampil/hilang berdasarkan pilihan sebelumnya (jenis lapangan, info harga)
@@ -349,6 +366,7 @@
         modeAksiAdmin = false;
         hentikanPolling();
         resetCekStatusBooking(); // kosongkan sisa pencarian penyewa sebelumnya (device dipakai bergantian)
+        resetPembayaranTab();
         // Pindahkan elemen #daftarBookingBox (dipakai bersama Admin & Penyewa) ke
         // dalam Tab 3 "Daftar Booking" - ini MEMINDAHKAN node yang sama (bukan
         // menyalin), jadi semua fungsi/listener di dalamnya tetap jalan normal.
@@ -368,9 +386,16 @@
         document.getElementById('hasilCekStatus').innerHTML = '';
     }
 
+    // Sama seperti resetCekStatusBooking(), tapi untuk tab "Pembayaran" - alasan
+    // privasi yang sama (device dipakai bergantian oleh penyewa berbeda).
+    function resetPembayaranTab() {
+        document.getElementById('kodeBookingBayar').value = '';
+        document.getElementById('hasilPembayaran').innerHTML = '';
+    }
+
     // Pindah antar tab di tampilan Penyewa (Kalender Ketersediaan / Ajukan Izin / Daftar Booking)
     function gantiTabPenyewa(nomor) {
-        for (let i = 1; i <= 3; i++) {
+        for (let i = 1; i <= 4; i++) {
             document.getElementById('tabBtnPenyewa' + i).classList.toggle('active', i === nomor);
             document.getElementById('tabPanelPenyewa' + i).classList.toggle('active', i === nomor);
         }
@@ -1082,7 +1107,7 @@
             await muatSemuaBooking();
             const b = daftarBookingTerakhir.find(x => x.id === id);
             if (b) {
-                const pesan = `Yth. ${b.nama},\n\nDisposisi Kepala Dinas untuk permohonan booking Anda di ${lokasiTampilDari(b)} pada ${b.tanggal} jam ${b.mulai} - ${b.selesai} sudah *disetujui/diteruskan*.\n\nTotal biaya: ${formatRupiah(b.totalHarga)}\n\nMohon segera lakukan pembayaran melalui salah satu cara berikut:\n\n${INFO_PEMBAYARAN}\n\nSetelah pembayaran kami terima dan verifikasi, surat balasan resmi (sudah ditandatangani Kepala Dinas) akan langsung kami kirimkan melalui chat WhatsApp ini. Mohon kirimkan bukti transfer/pembayaran ke chat ini setelah membayar.\n\nTerima kasih.\n- Admin SI PATO`;
+                const pesan = `Yth. ${b.nama},\n\nDisposisi Kepala Dinas untuk permohonan booking Anda di ${lokasiTampilDari(b)} pada ${b.tanggal} jam ${b.mulai} - ${b.selesai} sudah *disetujui/diteruskan*.\n\nTotal biaya: ${formatRupiah(b.totalHarga)}\n\nUntuk pembayaran (via QRIS), silakan:\n1. Buka ${URL_WEBSITE}\n2. Pilih "Masuk sebagai Penyewa"\n3. Buka tab "04 Pembayaran"\n4. Masukkan Kode Booking Anda: *${b.id}*\n5. Scan QRIS yang muncul, transfer sesuai total biaya di atas, lalu upload bukti pembayaran langsung di halaman itu.\n\nSetelah bukti pembayaran kami terima dan verifikasi, surat balasan resmi (sudah ditandatangani Kepala Dinas) akan kami kirimkan lewat chat WhatsApp ini.\n\nTerima kasih.\n- Admin SI PATO`;
                 const nomor = formatNomorWA(b.wa);
                 const linkWA = `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`;
                 if (waWindow) {
@@ -1227,6 +1252,14 @@
         else alert(hasil.message || 'Gagal.');
     }
 
+    async function tandaiLunasBayar(id) {
+        const password = mintaPasswordAdmin('Masukkan Password Admin untuk menandai pembayaran ini sudah diverifikasi/lunas:');
+        if (password === null) return;
+        const hasil = await panggilAPI({ action: 'tandaiLunas', id, password });
+        if (hasil.success) muatSemuaBooking();
+        else alert(hasil.message || 'Gagal.');
+    }
+
     async function prosesPembatalan(id) {
         const password = mintaPasswordAdmin("Masukkan Password Admin:");
         if (password === null) return;
@@ -1348,6 +1381,114 @@
         return '<span style="color:#555;">&#8987; Menunggu diproses admin (menunggu disposisi Kepala Dinas).</span>';
     }
 
+    // ================== TAB PEMBAYARAN (khusus Penyewa) ==================
+    // Alur: Admin kirim WA berisi Kode Booking (id) setelah disposisi disetujui ->
+    // penyewa tempel Kode Booking di sini -> muncul detail + QRIS sesuai lokasi ->
+    // penyewa upload bukti transfer -> klik "Konfirmasi via WA" biar Admin tahu.
+    function cariBookingUntukBayar() {
+        const kode = document.getElementById('kodeBookingBayar').value.trim();
+        const hasilBox = document.getElementById('hasilPembayaran');
+
+        if (!kode) {
+            hasilBox.innerHTML = '<p style="color:#c0392b;font-size:13px;">Masukkan Kode Booking dulu.</p>';
+            return;
+        }
+
+        const b = daftarBookingTerakhir.find(function (x) { return x.id === kode; });
+        if (!b) {
+            hasilBox.innerHTML = '<p style="color:#856404;font-size:13px;">Kode Booking tidak ditemukan. Pastikan kode yang ditempel persis sama dengan yang dikirim Admin via WhatsApp (coba copy-paste ulang, jangan diketik manual).</p>';
+            return;
+        }
+
+        if (b.statusSurat !== 'divalidasi') {
+            hasilBox.innerHTML = '<p style="color:#856404;font-size:13px;">Booking ini belum divalidasi Kepala Dinas, jadi belum bisa bayar dulu. Silakan tunggu konfirmasi Admin via WhatsApp.</p>';
+            return;
+        }
+
+        const namaLapangan = b.lokasi + (b.jenisLapangan ? ' - ' + b.jenisLapangan : '');
+        const fileQris = QRIS_MAP[b.lokasi] || '';
+
+        // Sudah pernah upload bukti sebelumnya -> tampilkan status, bukan form upload lagi
+        if (b.statusBayar === 'lunas') {
+            hasilBox.innerHTML = `
+                <div class="pembayaran-card">
+                    <strong>${namaLapangan}</strong><br>
+                    <span style="font-size:13px;color:#555;">${b.tanggal}, jam ${b.mulai} - ${b.selesai} - Total: ${formatRupiah(b.totalHarga)}</span>
+                    <p style="color:#155724;margin-top:10px;">&#9989; Pembayaran sudah diverifikasi Admin. Terima kasih!</p>
+                </div>`;
+            return;
+        }
+
+        if (b.statusBayar === 'menunggu_verifikasi') {
+            hasilBox.innerHTML = `
+                <div class="pembayaran-card">
+                    <strong>${namaLapangan}</strong><br>
+                    <span style="font-size:13px;color:#555;">${b.tanggal}, jam ${b.mulai} - ${b.selesai} - Total: ${formatRupiah(b.totalHarga)}</span>
+                    <p style="color:#856404;margin-top:10px;">&#8987; Bukti pembayaran Anda sudah kami terima, sedang menunggu diverifikasi Admin.</p>
+                    <button type="button" class="btn-wa-kontak" onclick='konfirmasiPembayaranWA(${JSON.stringify({id:b.id,nama:b.nama,lokasi:namaLapangan,tanggal:b.tanggal}).replace(/'/g, "&apos;")})'>&#128241; Ingatkan Admin via WA</button>
+                </div>`;
+            return;
+        }
+
+        // Belum bayar sama sekali -> tampilkan QRIS + form upload bukti
+        hasilBox.innerHTML = `
+            <div class="pembayaran-card">
+                <strong>${namaLapangan}</strong><br>
+                <span style="font-size:13px;color:#555;">${b.tanggal}, jam ${b.mulai} - ${b.selesai}</span><br>
+                <span style="font-size:15px;font-weight:bold;color:#007bff;">Total: ${formatRupiah(b.totalHarga)}</span>
+
+                <div style="text-align:center;margin:15px 0;">
+                    ${fileQris ? `<img src="${fileQris}" alt="QRIS ${b.lokasi}" style="max-width:260px;width:100%;border:1px solid #ddd;border-radius:8px;padding:8px;background:#fff;">`
+                               : '<p style="color:#c0392b;">QRIS untuk lokasi ini belum tersedia, hubungi Admin.</p>'}
+                </div>
+
+                <label>Upload Bukti Pembayaran:</label>
+                <input type="file" id="buktiPembayaranFile" accept="application/pdf,image/*">
+                <button type="button" onclick="uploadBuktiBayar('${b.id}')" style="width:100%;">Upload Bukti Pembayaran</button>
+            </div>`;
+    }
+
+    async function uploadBuktiBayar(id) {
+        const fileInput = document.getElementById('buktiPembayaranFile');
+        const file = fileInput.files[0];
+        if (!file) {
+            alert('Pilih file bukti pembayaran dulu (foto/screenshot transfer atau PDF).');
+            return;
+        }
+        if (file.size > 3 * 1024 * 1024) {
+            alert('Ukuran file maksimal 3MB.');
+            return;
+        }
+
+        const buktiBase64 = await new Promise(function (resolve, reject) {
+            const reader = new FileReader();
+            reader.onload = function () { resolve(reader.result); };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        const hasil = await panggilAPI({ action: 'uploadBuktiBayar', id, buktiBase64 });
+        if (hasil.success) {
+            await muatSemuaBooking();
+            const b = daftarBookingTerakhir.find(function (x) { return x.id === id; });
+            const namaLapangan = b ? (b.lokasi + (b.jenisLapangan ? ' - ' + b.jenisLapangan : '')) : '';
+            document.getElementById('hasilPembayaran').innerHTML = `
+                <div class="pembayaran-card">
+                    <p style="color:#155724;">&#9989; Bukti pembayaran berhasil diupload! Klik tombol di bawah untuk memberi tahu Admin lewat WhatsApp supaya cepat diverifikasi.</p>
+                    <button type="button" class="btn-wa-kontak" onclick='konfirmasiPembayaranWA(${JSON.stringify({ id: id, nama: b ? b.nama : "", lokasi: namaLapangan, tanggal: b ? b.tanggal : "" }).replace(/'/g, "&apos;")})'>&#128241; Konfirmasi via WA ke Admin</button>
+                </div>`;
+        } else {
+            alert(hasil.message || 'Gagal upload bukti pembayaran.');
+        }
+    }
+
+    // Buka chat WA ke Admin (nomor narahubung tetap), berisi info booking, supaya
+    // Admin tahu ada pembayaran yang perlu segera dicek & diverifikasi.
+    function konfirmasiPembayaranWA(info) {
+        const pesan = `Halo Admin SI PATO, saya ${info.nama} sudah upload bukti pembayaran untuk booking ${info.lokasi} tanggal ${info.tanggal} (Kode Booking: ${info.id}). Mohon dicek dan diverifikasi. Terima kasih.`;
+        window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
+    }
+
     function renderTabel(data) {
         tabelBody.innerHTML = '';
         if (!data || data.length === 0) {
@@ -1385,6 +1526,14 @@
                 if (b.statusSurat === 'divalidasi' && b.statusBalasan === 'na') {
                     aksiHtml += `<button type="button" class="btn-forward" onclick="generateSuratBalasanOtomatis('${b.id}', this)">&#9889; Generate Surat Balasan Otomatis</button>`;
                     aksiHtml += `<button type="button" class="btn-balasan" onclick="uploadSuratBalasan('${b.id}')">Upload Manual</button>`;
+                }
+                if (b.statusBayar === 'menunggu_verifikasi') {
+                    aksiHtml += `<button type="button" class="btn-lihat" onclick="lihatDokumen('${b.buktiUrl}')">&#128179; Lihat Bukti Bayar</button>`;
+                    aksiHtml += `<button type="button" class="btn-confirm" onclick="tandaiLunasBayar('${b.id}')">&#9989; Tandai Lunas</button>`;
+                }
+                if (b.statusBayar === 'lunas') {
+                    aksiHtml += `<span style="color:#155724;font-size:12px;font-weight:600;display:block;margin:4px 0;">&#9989; Sudah Lunas</span>`;
+                    if (b.buktiUrl) aksiHtml += `<button type="button" class="btn-lihat" onclick="lihatDokumen('${b.buktiUrl}')">Lihat Bukti Bayar</button>`;
                 }
                 if (b.suratBalasanUrl) {
                     aksiHtml += `<button type="button" class="btn-lihat" onclick="lihatDokumen('${b.suratBalasanUrl}')">Lihat Surat Balasan</button>`;
