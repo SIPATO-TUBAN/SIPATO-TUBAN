@@ -241,13 +241,13 @@
             <div id="slotPenyewaTab3"></div>
         </div>
 
-        <!-- TAB 4: Pembayaran (masukkan Kode Booking -> muncul QRIS sesuai lokasi -> upload bukti) -->
+        <!-- TAB 4: Pembayaran (masukkan No. WhatsApp -> muncul QRIS booking yg belum lunas -> upload bukti) -->
         <div class="tab-panel-penyewa" id="tabPanelPenyewa4">
             <div class="box">
                 <h3>&#128179; Pembayaran</h3>
-                <p style="font-size:13px;color:#666;margin-top:-8px;">Masukkan Kode Booking yang dikirimkan Admin lewat WhatsApp (setelah disposisi Kepala Dinas disetujui) untuk melihat QRIS pembayaran sesuai lokasi Anda.</p>
+                <p style="font-size:13px;color:#666;margin-top:-8px;">Masukkan nomor WhatsApp yang Anda pakai saat mengajukan izin, untuk melihat QRIS pembayaran booking Anda yang sudah divalidasi dan belum lunas.</p>
                 <div style="display:flex; gap:10px; align-items:flex-start;">
-                    <input type="text" id="kodeBookingBayar" placeholder="Tempel Kode Booking dari WhatsApp di sini" style="flex:1; margin-bottom:0;">
+                    <input type="tel" id="waBayar" placeholder="Contoh: 081234567890" style="flex:1; margin-bottom:0;">
                     <button type="button" onclick="cariBookingUntukBayar()" style="width:auto; padding:10px 20px; margin-top:0;">Cari</button>
                 </div>
                 <div id="hasilPembayaran"></div>
@@ -311,7 +311,7 @@
     const JAM_MALAM_MULAI = 18; // jam 18:00
 
     // >>> WAJIB DIISI: ganti dengan URL GitHub Pages situs ini yang sedang aktif <<<
-    const URL_WEBSITE = "https://sipato-tuban.github.io/SIPATO-TUBAN/";
+    const URL_WEBSITE = "GANTI_DENGAN_URL_WEBSITE_ANDA";
 
     // Pemetaan lokasi -> file gambar QRIS. "Lapangan Tennis Indoor" dan "Lapangan
     // Tennis Outdoor" SENGAJA memakai QRIS yang sama (qris-tennis.png), sesuai
@@ -389,7 +389,7 @@
     // Sama seperti resetCekStatusBooking(), tapi untuk tab "Pembayaran" - alasan
     // privasi yang sama (device dipakai bergantian oleh penyewa berbeda).
     function resetPembayaranTab() {
-        document.getElementById('kodeBookingBayar').value = '';
+        document.getElementById('waBayar').value = '';
         document.getElementById('hasilPembayaran').innerHTML = '';
     }
 
@@ -695,7 +695,7 @@
         }
     }
 
-    // Klik tanggal di kalender (Tab 1): tampilkan detail jam yang sudah terpaka
+    // Klik tanggal di kalender (Tab 1): tampilkan detail jam yang sudah terpakai
     // (kalau ada), plus tombol pintas utk lanjut ke Tab 2 "Ajukan Izin" dengan
     // lokasi/jenis lapangan/tanggal yang sudah otomatis terisi.
     function pilihTanggalDariKalender(tanggalStr, daftarJamTerpakai) {
@@ -1107,7 +1107,7 @@
             await muatSemuaBooking();
             const b = daftarBookingTerakhir.find(x => x.id === id);
             if (b) {
-                const pesan = `Yth. ${b.nama},\n\nDisposisi Kepala Dinas untuk permohonan booking Anda di ${lokasiTampilDari(b)} pada ${b.tanggal} jam ${b.mulai} - ${b.selesai} sudah *disetujui/diteruskan*.\n\nTotal biaya: ${formatRupiah(b.totalHarga)}\n\nUntuk pembayaran (via QRIS), silakan:\n1. Buka ${URL_WEBSITE}\n2. Pilih "Masuk sebagai Penyewa"\n3. Buka tab "04 Pembayaran"\n4. Masukkan Kode Booking Anda: *${b.id}*\n5. Scan QRIS yang muncul, transfer sesuai total biaya di atas, lalu upload bukti pembayaran langsung di halaman itu.\n\nSetelah bukti pembayaran kami terima dan verifikasi, surat balasan resmi (sudah ditandatangani Kepala Dinas) akan kami kirimkan lewat chat WhatsApp ini.\n\nTerima kasih.\n- Admin SI PATO`;
+                const pesan = `Yth. ${b.nama},\n\nDisposisi Kepala Dinas untuk permohonan booking Anda di ${lokasiTampilDari(b)} pada ${b.tanggal} jam ${b.mulai} - ${b.selesai} sudah *disetujui/diteruskan*.\n\nTotal biaya: ${formatRupiah(b.totalHarga)}\n\nUntuk pembayaran (via QRIS), silakan:\n1. Buka ${URL_WEBSITE}\n2. Pilih "Masuk sebagai Penyewa"\n3. Buka tab "04 Pembayaran"\n4. Masukkan nomor WhatsApp Anda (nomor yang menerima pesan ini)\n5. Scan QRIS yang muncul, transfer sesuai total biaya di atas, lalu upload bukti pembayaran langsung di halaman itu.\n\nSetelah bukti pembayaran kami terima dan verifikasi, surat balasan resmi (sudah ditandatangani Kepala Dinas) akan kami kirimkan lewat chat WhatsApp ini.\n\nTerima kasih.\n- Admin SI PATO`;
                 const nomor = formatNomorWA(b.wa);
                 const linkWA = `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`;
                 if (waWindow) {
@@ -1382,74 +1382,77 @@
     }
 
     // ================== TAB PEMBAYARAN (khusus Penyewa) ==================
-    // Alur: Admin kirim WA berisi Kode Booking (id) setelah disposisi disetujui ->
-    // penyewa tempel Kode Booking di sini -> muncul detail + QRIS sesuai lokasi ->
-    // penyewa upload bukti transfer -> klik "Konfirmasi via WA" biar Admin tahu.
+    // Alur: Admin kirim WA setelah disposisi disetujui -> penyewa masukkan nomor
+    // WhatsApp-nya sendiri di sini (bukan Kode Booking - lebih gampang diketik di
+    // HP daripada copy-paste ID panjang) -> muncul kartu utk tiap booking yang
+    // sudah divalidasi; yang BELUM lunas tampil QRIS + form upload, yang sudah
+    // lunas/menunggu verifikasi cukup tampil statusnya saja.
     function cariBookingUntukBayar() {
-        const kode = document.getElementById('kodeBookingBayar').value.trim();
+        const inputWa = document.getElementById('waBayar').value.trim();
         const hasilBox = document.getElementById('hasilPembayaran');
 
-        if (!kode) {
-            hasilBox.innerHTML = '<p style="color:#c0392b;font-size:13px;">Masukkan Kode Booking dulu.</p>';
+        if (!inputWa) {
+            hasilBox.innerHTML = '<p style="color:#c0392b;font-size:13px;">Masukkan nomor WhatsApp Anda dulu.</p>';
             return;
         }
 
-        const b = daftarBookingTerakhir.find(function (x) { return x.id === kode; });
-        if (!b) {
-            hasilBox.innerHTML = '<p style="color:#856404;font-size:13px;">Kode Booking tidak ditemukan. Pastikan kode yang ditempel persis sama dengan yang dikirim Admin via WhatsApp (coba copy-paste ulang, jangan diketik manual).</p>';
+        const nomorDicari = formatNomorWA(inputWa);
+        const daftarDivalidasi = daftarBookingTerakhir.filter(function (b) {
+            return formatNomorWA(b.wa) === nomorDicari && b.statusSurat === 'divalidasi';
+        });
+
+        if (daftarDivalidasi.length === 0) {
+            hasilBox.innerHTML = '<p style="color:#856404;font-size:13px;">Tidak ditemukan booking dengan nomor WhatsApp itu yang sudah divalidasi Kepala Dinas. Kalau booking Anda masih berstatus "menunggu diproses admin", silakan tunggu konfirmasi Admin dulu via WhatsApp.</p>';
             return;
         }
 
-        if (b.statusSurat !== 'divalidasi') {
-            hasilBox.innerHTML = '<p style="color:#856404;font-size:13px;">Booking ini belum divalidasi Kepala Dinas, jadi belum bisa bayar dulu. Silakan tunggu konfirmasi Admin via WhatsApp.</p>';
-            return;
-        }
+        // Urutkan: yang belum lunas ditaruh paling atas, biar langsung kelihatan
+        // mana yang masih perlu dibayar kalau ada lebih dari satu booking.
+        const prioritas = { na: 0, menunggu_verifikasi: 1, lunas: 2 };
+        daftarDivalidasi.sort(function (a, b) {
+            return (prioritas[a.statusBayar] ?? 0) - (prioritas[b.statusBayar] ?? 0);
+        });
 
+        hasilBox.innerHTML = daftarDivalidasi.map(renderKartuPembayaran).join('');
+    }
+
+    function renderKartuPembayaran(b) {
         const namaLapangan = b.lokasi + (b.jenisLapangan ? ' - ' + b.jenisLapangan : '');
         const fileQris = QRIS_MAP[b.lokasi] || '';
+        const infoDasar = `<strong>${namaLapangan}</strong><br><span style="font-size:13px;color:#555;">${b.tanggal}, jam ${b.mulai} - ${b.selesai} - Total: ${formatRupiah(b.totalHarga)}</span>`;
 
-        // Sudah pernah upload bukti sebelumnya -> tampilkan status, bukan form upload lagi
+        // Sudah diverifikasi Admin -> tidak perlu tampil QRIS lagi
         if (b.statusBayar === 'lunas') {
-            hasilBox.innerHTML = `
-                <div class="pembayaran-card">
-                    <strong>${namaLapangan}</strong><br>
-                    <span style="font-size:13px;color:#555;">${b.tanggal}, jam ${b.mulai} - ${b.selesai} - Total: ${formatRupiah(b.totalHarga)}</span>
-                    <p style="color:#155724;margin-top:10px;">&#9989; Pembayaran sudah diverifikasi Admin. Terima kasih!</p>
-                </div>`;
-            return;
+            return `<div class="pembayaran-card">${infoDasar}<p style="color:#155724;margin-top:10px;">&#9989; Pembayaran sudah diverifikasi Admin. Terima kasih!</p></div>`;
         }
 
+        // Sudah upload bukti, tinggal tunggu Admin cek -> tidak perlu tampil QRIS lagi
         if (b.statusBayar === 'menunggu_verifikasi') {
-            hasilBox.innerHTML = `
+            return `
                 <div class="pembayaran-card">
-                    <strong>${namaLapangan}</strong><br>
-                    <span style="font-size:13px;color:#555;">${b.tanggal}, jam ${b.mulai} - ${b.selesai} - Total: ${formatRupiah(b.totalHarga)}</span>
+                    ${infoDasar}
                     <p style="color:#856404;margin-top:10px;">&#8987; Bukti pembayaran Anda sudah kami terima, sedang menunggu diverifikasi Admin.</p>
-                    <button type="button" class="btn-wa-kontak" onclick='konfirmasiPembayaranWA(${JSON.stringify({id:b.id,nama:b.nama,lokasi:namaLapangan,tanggal:b.tanggal}).replace(/'/g, "&apos;")})'>&#128241; Ingatkan Admin via WA</button>
+                    <button type="button" class="btn-wa-kontak" onclick='konfirmasiPembayaranWA(${JSON.stringify({ id: b.id, nama: b.nama, lokasi: namaLapangan, tanggal: b.tanggal }).replace(/'/g, "&apos;")})'>&#128241; Ingatkan Admin via WA</button>
                 </div>`;
-            return;
         }
 
         // Belum bayar sama sekali -> tampilkan QRIS + form upload bukti
-        hasilBox.innerHTML = `
+        const inputId = 'buktiPembayaranFile_' + b.id;
+        return `
             <div class="pembayaran-card">
-                <strong>${namaLapangan}</strong><br>
-                <span style="font-size:13px;color:#555;">${b.tanggal}, jam ${b.mulai} - ${b.selesai}</span><br>
-                <span style="font-size:15px;font-weight:bold;color:#007bff;">Total: ${formatRupiah(b.totalHarga)}</span>
-
+                ${infoDasar}
                 <div style="text-align:center;margin:15px 0;">
                     ${fileQris ? `<img src="${fileQris}" alt="QRIS ${b.lokasi}" style="max-width:260px;width:100%;border:1px solid #ddd;border-radius:8px;padding:8px;background:#fff;">`
                                : '<p style="color:#c0392b;">QRIS untuk lokasi ini belum tersedia, hubungi Admin.</p>'}
                 </div>
-
                 <label>Upload Bukti Pembayaran:</label>
-                <input type="file" id="buktiPembayaranFile" accept="application/pdf,image/*">
-                <button type="button" onclick="uploadBuktiBayar('${b.id}')" style="width:100%;">Upload Bukti Pembayaran</button>
+                <input type="file" id="${inputId}" accept="application/pdf,image/*">
+                <button type="button" onclick="uploadBuktiBayar('${b.id}', '${inputId}')" style="width:100%;">Upload Bukti Pembayaran</button>
             </div>`;
     }
 
-    async function uploadBuktiBayar(id) {
-        const fileInput = document.getElementById('buktiPembayaranFile');
+    async function uploadBuktiBayar(id, inputId) {
+        const fileInput = document.getElementById(inputId);
         const file = fileInput.files[0];
         if (!file) {
             alert('Pilih file bukti pembayaran dulu (foto/screenshot transfer atau PDF).');
@@ -1470,13 +1473,7 @@
         const hasil = await panggilAPI({ action: 'uploadBuktiBayar', id, buktiBase64 });
         if (hasil.success) {
             await muatSemuaBooking();
-            const b = daftarBookingTerakhir.find(function (x) { return x.id === id; });
-            const namaLapangan = b ? (b.lokasi + (b.jenisLapangan ? ' - ' + b.jenisLapangan : '')) : '';
-            document.getElementById('hasilPembayaran').innerHTML = `
-                <div class="pembayaran-card">
-                    <p style="color:#155724;">&#9989; Bukti pembayaran berhasil diupload! Klik tombol di bawah untuk memberi tahu Admin lewat WhatsApp supaya cepat diverifikasi.</p>
-                    <button type="button" class="btn-wa-kontak" onclick='konfirmasiPembayaranWA(${JSON.stringify({ id: id, nama: b ? b.nama : "", lokasi: namaLapangan, tanggal: b ? b.tanggal : "" }).replace(/'/g, "&apos;")})'>&#128241; Konfirmasi via WA ke Admin</button>
-                </div>`;
+            cariBookingUntukBayar(); // refresh seluruh daftar kartu (nomor WA di kotak input masih sama)
         } else {
             alert(hasil.message || 'Gagal upload bukti pembayaran.');
         }
