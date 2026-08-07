@@ -4,15 +4,21 @@
     <meta charset="UTF-8">
     <title>SI PATO - DISBUDPORAPAR TUBAN</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; }
+        body { font-family: 'Segoe UI', -apple-system, sans-serif; margin: 20px; color: #1F2937; }
         .container { max-width: 1100px; margin: auto; }
-        .box { border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0 15px 0; box-sizing: border-box; font-family: inherit; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
-        th { background-color: #f4f4f4; }
-        button { cursor: pointer; padding: 8px 15px; border-radius: 4px; border: none; }
-        button[type="submit"] { background-color: #007bff; color: white; width: 100%; }
+        .box { border: 1px solid #E5E9F0; padding: 22px; border-radius: 14px; margin-bottom: 20px; background: #fff; box-shadow: 0 1px 3px rgba(16,24,40,.04); }
+        .box h3 { margin-top: 0; font-size: 18px; color: #12213F; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #344054; margin-bottom: 4px; }
+        input, select, textarea {
+            width: 100%; padding: 10px 12px; margin: 0 0 15px 0; box-sizing: border-box; font-family: inherit;
+            font-size: 14px; border: 1px solid #D0D5DD; border-radius: 8px; background: #fff; color: #1F2937;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border-bottom: 1px solid #EEF1F6; padding: 10px 8px; text-align: left; font-size: 13px; }
+        th { background-color: #F7F9FC; color: #5B6478; font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px; }
+        button { cursor: pointer; padding: 9px 16px; border-radius: 8px; border: none; font-size: 13.5px; font-weight: 600; font-family: inherit; }
+        button[type="submit"] { background-color: #2563EB; color: white; width: 100%; padding: 13px; font-size: 15px; }
         .btn-download { background-color: #28a745; color: white; margin-top: 10px; width: 100%; }
         .btn-cancel { background-color: #dc3545; color: white; padding: 5px 10px; }
         .btn-confirm { background-color: #28a745; color: white; padding: 5px 10px; }
@@ -28,25 +34,11 @@
         .ringkasan p { margin: 4px 0; }
         .status-menunggu { color: #b8860b; font-weight: bold; }
         .status-lunas { color: #28a745; font-weight: bold; }
+        .status-ditolak { color: #dc3545; font-weight: bold; }
         .harga-info { font-size: 13px; color: #555; margin-top: -10px; margin-bottom: 15px; white-space: pre-line; }
-        .logo-header { text-align: center; margin-bottom: 10px; }
-        .logo-header img { height: 90px; width: auto; }
         h2 { text-align: center; }
 
-        /* --- Landing / dashboard awal --- */
-        .landing-wrap { text-align: center; padding: 40px 0; }
-        .landing-wrap p.subjudul { color: #666; margin-bottom: 30px; }
-        .landing-pilihan { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
-        .kartu-peran {
-            width: 220px; padding: 30px 20px; border: 1px solid #ddd; border-radius: 10px;
-            cursor: pointer; background: #fff; transition: box-shadow .15s, transform .15s;
-        }
-        .kartu-peran:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.12); transform: translateY(-2px); }
-        .kartu-peran .ikon { font-size: 40px; margin-bottom: 10px; }
-        .kartu-peran h4 { margin: 5px 0; }
-        .kartu-peran p { font-size: 12px; color: #777; margin: 0; }
-        .kartu-penyewa { border-top: 4px solid #007bff; }
-        .kartu-admin { border-top: 4px solid #17a2b8; }
+        /* --- dashboard awal (landing) --- */
         .btn-menu { background-color: #6c757d; color: white; padding: 6px 14px; margin-bottom: 15px; }
 
         /* --- Kalender ketersediaan --- */
@@ -75,16 +67,20 @@
         .statistik-bar-bg { background: #eee; border-radius: 4px; height: 14px; overflow: hidden; }
         .statistik-bar-fill { background: #17a2b8; height: 100%; border-radius: 4px; }
 
-        /* --- Sistem Tab untuk Penyewa --- */
-        .tab-nav-penyewa { display: flex; gap: 2px; margin: 15px 0 0; border-bottom: 2px solid #ddd; overflow-x: auto; }
-        .tab-btn-penyewa {
-            background: #f4f4f4; border: 1px solid #ddd; border-bottom: none; color: #666;
-            padding: 10px 16px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 13.5px;
-            white-space: nowrap; position: relative; top: 2px; cursor: pointer;
+        /* --- Sistem Tab untuk Penyewa (gaya pill/segmented, sesuai arahan desain) --- */
+        .tab-nav-penyewa {
+            display: flex; gap: 4px; margin: 18px 0 20px; padding: 5px; background: #EEF1F6;
+            border-radius: 12px; overflow-x: auto;
         }
-        .tab-btn-penyewa .tab-no { font-family: monospace; font-size: 11px; opacity: .6; margin-right: 5px; }
-        .tab-btn-penyewa.active { background: #fff; color: #007bff; border-bottom: 2px solid #fff; box-shadow: 0 -2px 0 #007bff inset; }
-        .tab-panel-penyewa { display: none; padding-top: 18px; }
+        .tab-btn-penyewa {
+            flex: 1; background: transparent; border: none; color: #5B6478;
+            padding: 10px 14px; border-radius: 9px; font-weight: 700; font-size: 13px;
+            white-space: nowrap; cursor: pointer; transition: background .15s, color .15s;
+        }
+        .tab-btn-penyewa .tab-no { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 10.5px; opacity: .55; margin-right: 5px; }
+        .tab-btn-penyewa.active { background: #2563EB; color: #fff; box-shadow: 0 3px 8px rgba(37,99,235,.35); }
+        .tab-btn-penyewa.active .tab-no { opacity: .85; }
+        .tab-panel-penyewa { display: none; }
         .tab-panel-penyewa.active { display: block; }
 
         /* --- Bar kontak Admin (selalu tampil di bawah tab Penyewa) --- */
@@ -102,31 +98,125 @@
             border: 1px solid #ddd; background: #f4f4f4; cursor: pointer; color: #555;
         }
         .chip.active { background: #007bff; border-color: #007bff; color: #fff; }
+
+        /* ============================================================
+           REDESAIN HALAMAN AWAL (LANDING) - identitas visual baru.
+           Palet: navy #0B2545 (otoritas/pemerintah), biru #2563EB (aksi
+           Penyewa), teal #0D9488 (aksi Admin), krem lembut sbg latar
+           halaman. Motif "garis lintasan lari" dipakai sbg signature
+           elemen hero - merujuk ke tema tempat olahraga tanpa memakai
+           foto berhak cipta / clich\u00e9 AI (krem+terracotta, gelap+neon).
+           ============================================================ */
+        body { background: #F7F9FC; font-family: 'Segoe UI', -apple-system, sans-serif; color: #1F2937; }
+        .container { max-width: 1100px; }
+
+        .hero-landing {
+            position: relative; overflow: hidden; border-radius: 16px;
+            background: linear-gradient(135deg, #0B2545 0%, #123B75 55%, #1D4ED8 100%);
+            padding: 56px 32px 40px; margin-bottom: 24px; text-align: center; color: #fff;
+        }
+        .hero-landing::before {
+            content: ""; position: absolute; inset: 0; opacity: .55; pointer-events: none;
+            background-image: url('batik-gedog.svg'); background-repeat: repeat; background-size: 160px 160px;
+        }
+        .hero-landing > * { position: relative; z-index: 1; }
+        .hero-logo-wrap { background: #fff; width: 96px; height: 96px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
+            box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+        .hero-logo-wrap img { height: 66px; width: auto; }
+        .hero-landing h1 { font-size: 44px; font-weight: 800; margin: 0 0 6px; letter-spacing: 1px; }
+        .hero-landing .tagline { font-size: 15.5px; color: #DCE6FA; margin: 0 0 2px; }
+        .hero-landing .instansi { font-size: 12.5px; color: #9DC0FF; font-weight: 600; letter-spacing: 1px; margin: 0 0 34px; }
+
+        .peran-pilihan { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; max-width: 640px; margin: 0 auto; }
+        .peran-kartu {
+            flex: 1; min-width: 240px; max-width: 300px; background: #fff; border-radius: 14px;
+            padding: 28px 24px; text-align: left; color: #1F2937; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,.18); transition: transform .15s;
+        }
+        .peran-kartu:hover { transform: translateY(-4px); }
+        .peran-ikon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-size: 24px; margin-bottom: 14px; color: #fff; }
+        .peran-kartu.penyewa .peran-ikon { background: #2563EB; }
+        .peran-kartu.admin .peran-ikon { background: #0D9488; }
+        .peran-label { font-size: 12px; color: #8A93A3; font-weight: 600; margin: 0 0 2px; }
+        .peran-kartu h3 { margin: 0 0 8px; font-size: 21px; }
+        .peran-kartu p { font-size: 13px; color: #667085; margin: 0 0 18px; line-height: 1.5; }
+        .peran-kartu button { width: 100%; font-weight: 700; font-size: 14.5px; padding: 11px; }
+        .peran-kartu.penyewa button { background: #2563EB; color: #fff; }
+        .peran-kartu.admin button { background: #0D9488; color: #fff; }
+
+        .fitur-badge-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin: 26px 0 10px; }
+        .fitur-badge { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #E5E9F0;
+            border-radius: 10px; padding: 12px 16px; font-size: 12.5px; color: #475066; min-width: 190px; }
+        .fitur-badge .ikon-bulat { width: 34px; height: 34px; border-radius: 50%; background: #EEF2FF; color: #2563EB;
+            display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .fitur-badge strong { display: block; color: #1F2937; font-size: 12.5px; }
+
+        .footer-landing { text-align: center; font-size: 11.5px; color: #9AA3B2; margin: 28px 0 10px; }
+
+        /* Top bar ringkas - tampil di semua halaman SELAIN landing (Penyewa & Admin) */
+        .topbar-kompak { display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 4px; margin-bottom: 14px; border-bottom: 1px solid #E5E9F0; }
+        .topbar-kompak .brand { display: flex; align-items: center; gap: 10px; }
+        .topbar-kompak .brand img { height: 34px; width: auto; }
+        .topbar-kompak .brand .nama { font-weight: 800; font-size: 15px; color: #0B2545; line-height: 1.1; }
+        .topbar-kompak .brand .instansi { font-size: 10.5px; color: #8A93A3; font-weight: 600; letter-spacing: .5px; }
+        .topbar-kompak .peran-badge { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700;
+            padding: 6px 12px; border-radius: 20px; }
+        .topbar-kompak .peran-badge.penyewa { background: #EEF2FF; color: #2563EB; }
+        .topbar-kompak .peran-badge.admin { background: #E7F6F4; color: #0D9488; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="logo-header"><img src="logo.png" alt="Logo Kabupaten Tuban"></div>
-    <h4 style="text-align:center; margin:0; color:#444; font-weight:600;">DISBUDPORAPAR TUBAN</h4>
-    <h2 style="margin-bottom:2px;">SI PATO</h2>
-    <p style="text-align:center; margin-top:0; color:#666; font-size:14px;">SISTEM INFORMASI PERIJINAN PEMAKAIAN TEMPAT OLAHRAGA</p>
-
-    <!-- LANDING / DASHBOARD AWAL -->
-    <div id="landingBox" class="landing-wrap">
-        <p class="subjudul">Silakan pilih masuk sebagai:</p>
-        <div class="landing-pilihan">
-            <div class="kartu-peran kartu-penyewa" onclick="masukSebagaiPenyewa()">
-                <div class="ikon">&#128100;</div>
-                <h4>Penyewa</h4>
-                <p>Ajukan booking lapangan / tempat olahraga</p>
-            </div>
-            <div class="kartu-peran kartu-admin" onclick="masukSebagaiAdmin()">
-                <div class="ikon">&#128274;</div>
-                <h4>Admin</h4>
-                <p>Login dengan password untuk kelola booking</p>
+    <!-- TOP BAR RINGKAS: tampil di semua halaman KECUALI landing (Penyewa & Admin) -->
+    <div id="topbarKompak" class="topbar-kompak" style="display:none;">
+        <div class="brand">
+            <img src="logo.png" alt="Logo Kabupaten Tuban">
+            <div>
+                <div class="nama">SI PATO</div>
+                <div class="instansi">DISBUDPORAPAR TUBAN</div>
             </div>
         </div>
+        <div id="peranBadge" class="peran-badge penyewa">&#128100; Penyewa</div>
+    </div>
+
+    <!-- LANDING / DASHBOARD AWAL -->
+    <div id="landingBox">
+        <div class="hero-landing">
+            <div class="hero-logo-wrap"><img src="logo.png" alt="Logo Kabupaten Tuban"></div>
+            <h1>SI PATO</h1>
+            <p class="tagline">Sistem Informasi Perijinan Pemakaian Tempat Olahraga</p>
+            <p class="instansi">DISBUDPORAPAR KABUPATEN TUBAN</p>
+
+            <div class="peran-pilihan">
+                <div class="peran-kartu penyewa" onclick="masukSebagaiPenyewa()">
+                    <div class="peran-ikon">&#128100;</div>
+                    <p class="peran-label">MASUK SEBAGAI</p>
+                    <h3>Penyewa</h3>
+                    <p>Ajukan permohonan izin pemakaian fasilitas olahraga dengan mudah dan cepat.</p>
+                    <button type="button">Masuk sebagai Penyewa &rarr;</button>
+                </div>
+                <div class="peran-kartu admin" onclick="masukSebagaiAdmin()">
+                    <div class="peran-ikon">&#9881;&#65039;</div>
+                    <p class="peran-label">MASUK SEBAGAI</p>
+                    <h3>Admin</h3>
+                    <p>Kelola semua pengajuan, disposisi, pembayaran, dan penerbitan surat izin.</p>
+                    <button type="button">Login Admin &rarr;</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="fitur-badge-row">
+            <div class="fitur-badge"><span class="ikon-bulat">&#128205;</span><span><strong>5 Lokasi</strong>Fasilitas Olahraga</span></div>
+            <div class="fitur-badge"><span class="ikon-bulat">&#9889;</span><span><strong>Sistem Online</strong>Mudah &amp; Cepat</span></div>
+            <div class="fitur-badge"><span class="ikon-bulat">&#128203;</span><span><strong>Transparan</strong>Tanpa Kertas</span></div>
+            <div class="fitur-badge"><span class="ikon-bulat">&#128274;</span><span><strong>Aman</strong>Data Tersimpan Rapi</span></div>
+        </div>
+
+        <p class="footer-landing">&copy; 2026 DISBUDPORAPAR KABUPATEN TUBAN</p>
     </div>
 
     <!-- STEP 1: FORM BOOKING (khusus penyewa) -->
@@ -358,6 +448,7 @@
     // Navigasi dashboard awal: landing -> pilih Penyewa atau Admin
     function tampilkanLanding() {
         document.getElementById('landingBox').style.display = 'block';
+        document.getElementById('topbarKompak').style.display = 'none';
         document.getElementById('penyewaTabsBox').style.display = 'none';
         document.getElementById('daftarBookingBox').style.display = 'none';
         sesiAdminPassword = null; // "logout" - password sesi dilupakan saat kembali ke menu
@@ -380,6 +471,9 @@
 
     function masukSebagaiPenyewa() {
         document.getElementById('landingBox').style.display = 'none';
+        document.getElementById('topbarKompak').style.display = 'flex';
+        document.getElementById('peranBadge').className = 'peran-badge penyewa';
+        document.getElementById('peranBadge').innerHTML = '&#128100; Penyewa';
         document.getElementById('penyewaTabsBox').style.display = 'block';
         document.getElementById('btnDownload').style.display = 'none';
         document.getElementById('btnBersihkan').style.display = 'none';
@@ -437,6 +531,9 @@
         sesiAdminPassword = password; // dipakai ulang otomatis utk aksi admin selama sesi ini
         modeAksiAdmin = true;
         document.getElementById('landingBox').style.display = 'none';
+        document.getElementById('topbarKompak').style.display = 'flex';
+        document.getElementById('peranBadge').className = 'peran-badge admin';
+        document.getElementById('peranBadge').innerHTML = '&#9881;&#65039; Admin';
         document.getElementById('penyewaTabsBox').style.display = 'none';
         // Pindahkan #daftarBookingBox keluar dari tab Penyewa (kalau sebelumnya di
         // sana) ke slot khusus Admin, di luar sistem tab.
@@ -1152,6 +1249,43 @@
         }
     }
 
+    // Alur penolakan disposisi: Admin isi alasan -> status booking jadi 'ditolak'
+    // (status akhir - penyewa tidak bisa lanjut ke pembayaran) -> WA otomatis
+    // terbuka berisi pemberitahuan penolakan + alasannya ke penyewa.
+    async function tolakDisposisiAdmin(id) {
+        const password = mintaPasswordAdmin("Masukkan Password Admin untuk menolak disposisi ini:");
+        if (password === null) return;
+        const alasan = prompt("Tulis alasan penolakan disposisi (akan dikirim ke penyewa via WhatsApp):");
+        if (alasan === null) return;
+        if (!alasan.trim()) { alert('Alasan penolakan wajib diisi.'); return; }
+        if (!confirm(`Yakin tolak disposisi booking ini dengan alasan:\n"${alasan}"\n\nPenyewa tidak akan bisa melanjutkan ke pembayaran untuk booking ini.`)) return;
+
+        // Buka tab kosong SEKARANG JUGA (sebelum await), sama seperti trik di
+        // validasiKepalaDinas, supaya pop-up WA tidak diblokir browser.
+        const waWindow = window.open('', '_blank');
+
+        const hasil = await panggilAPI({ action: 'tolakDisposisi', id, alasan: alasan.trim(), password });
+        if (hasil.success) {
+            await muatSemuaBooking();
+            const b = daftarBookingTerakhir.find(x => x.id === id);
+            if (b) {
+                const pesan = `Yth. ${b.nama},\n\nMohon maaf, permohonan booking Anda di ${lokasiTampilDari(b)} pada ${b.tanggal} jam ${b.mulai} - ${b.selesai} *TIDAK DAPAT KAMI SETUJUI*.\n\nAlasan: ${alasan.trim()}\n\nAnda dapat mengajukan permohonan baru dengan jadwal/keperluan yang berbeda melalui website kami. Mohon maaf atas ketidaknyamanannya.\n\nTerima kasih.\n- Admin SI PATO`;
+                const nomor = formatNomorWA(b.wa);
+                const linkWA = `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`;
+                if (waWindow) {
+                    waWindow.location.href = linkWA;
+                } else {
+                    bukaWA(b.wa, pesan);
+                }
+            } else if (waWindow) {
+                waWindow.close();
+            }
+        } else {
+            if (waWindow) waWindow.close();
+            alert(hasil.message || 'Gagal menolak disposisi.');
+        }
+    }
+
     // Alternatif otomatis dari uploadSuratBalasan(): admin tidak perlu bikin surat
     // manual di Word lalu upload - sistem yang menyusun & menandatangani (tempel
     // gambar TTD) sendiri, admin cukum isi 3 hal yg memang tidak ada di data booking
@@ -1420,6 +1554,9 @@
     // Terjemahkan status mentah (statusSurat/statusBalasan) jadi kalimat yang
     // mudah dipahami penyewa awam, tanpa istilah teknis backend.
     function labelStatusUntukPenyewa(b) {
+        if (b.statusSurat === 'ditolak') {
+            return `<span style="color:#721c24;">&#10060; Mohon maaf, permohonan Anda <strong>TIDAK DISETUJUI</strong> Kepala Dinas.${b.alasanPenolakan ? ' Alasan: ' + b.alasanPenolakan + '.' : ''} Anda dapat mengajukan permohonan baru dengan jadwal/keperluan berbeda.</span>`;
+        }
         if (b.statusBalasan === 'terkirim') {
             return '<span style="color:#155724;">&#9989; Selesai - Surat balasan sudah dikirim ke WhatsApp Anda.</span>';
         }
@@ -1448,12 +1585,20 @@
         }
 
         const nomorDicari = formatNomorWA(inputWa);
-        const daftarDivalidasi = daftarBookingTerakhir.filter(function (b) {
-            return formatNomorWA(b.wa) === nomorDicari && b.statusSurat === 'divalidasi';
+        const semuaBookingNomorIni = daftarBookingTerakhir.filter(function (b) {
+            return formatNomorWA(b.wa) === nomorDicari;
+        });
+        const daftarDivalidasi = semuaBookingNomorIni.filter(function (b) {
+            return b.statusSurat === 'divalidasi';
         });
 
         if (daftarDivalidasi.length === 0) {
-            hasilBox.innerHTML = '<p style="color:#856404;font-size:13px;">Tidak ditemukan booking dengan nomor WhatsApp itu yang sudah divalidasi Kepala Dinas. Kalau booking Anda masih berstatus "menunggu diproses admin", silakan tunggu konfirmasi Admin dulu via WhatsApp.</p>';
+            const adaDitolak = semuaBookingNomorIni.some(function (b) { return b.statusSurat === 'ditolak'; });
+            if (adaDitolak) {
+                hasilBox.innerHTML = '<p style="color:#721c24;font-size:13px;">Ada booking dengan nomor ini yang <strong>tidak disetujui (ditolak)</strong> Kepala Dinas - tidak bisa lanjut ke pembayaran. Cek detail alasannya lewat "Cek Status Booking Anda" di tab 02 Ajukan Izin.</p>';
+            } else {
+                hasilBox.innerHTML = '<p style="color:#856404;font-size:13px;">Tidak ditemukan booking dengan nomor WhatsApp itu yang sudah divalidasi Kepala Dinas. Kalau booking Anda masih berstatus "menunggu diproses admin", silakan tunggu konfirmasi Admin dulu via WhatsApp.</p>';
+            }
             return;
         }
 
@@ -1600,6 +1745,10 @@
             let statusSuratTeks = 'Menunggu Diproses Admin';
             let statusSuratClass = 'status-menunggu';
             if (b.statusSurat === 'divalidasi') { statusSuratTeks = 'Disposisi Diteruskan - Silakan Bayar via WA'; statusSuratClass = 'status-lunas'; }
+            if (b.statusSurat === 'ditolak') {
+                statusSuratTeks = 'Disposisi Ditolak' + (b.alasanPenolakan ? `<br><span style="font-weight:normal;font-size:11px;">Alasan: ${b.alasanPenolakan}</span>` : '');
+                statusSuratClass = 'status-ditolak';
+            }
 
             let statusBalasanTeks = '-';
             if (b.statusBalasan === 'diunggah') statusBalasanTeks = 'Sudah Diunggah, Siap Dikirim';
@@ -1618,7 +1767,8 @@
 
                 if (b.statusSurat === 'menunggu') {
                     aksiHtml += `<button type="button" class="btn-kirim-wa" onclick="kirimWAMenungguDisposisi('${b.id}')">Kirim WA: Menunggu Disposisi</button>`;
-                    aksiHtml += `<button type="button" class="btn-forward" onclick="validasiKepalaDinas('${b.id}')">Validasi &amp; Kirim Instruksi Pembayaran</button>`;
+                    aksiHtml += `<button type="button" class="btn-confirm" onclick="validasiKepalaDinas('${b.id}')">&#9989; Setujui &amp; Kirim Instruksi Pembayaran</button>`;
+                    aksiHtml += `<button type="button" class="btn-cancel" onclick="tolakDisposisiAdmin('${b.id}')">&#10060; Tolak Disposisi</button>`;
                 }
                 if (b.statusSurat === 'divalidasi' && b.statusBalasan === 'na') {
                     aksiHtml += `<button type="button" class="btn-forward" onclick="generateSuratBalasanOtomatis('${b.id}', this)">&#9889; Generate Surat Balasan Otomatis</button>`;
