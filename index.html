@@ -774,9 +774,11 @@
         document.getElementById('kalenderJudulBulan').textContent = `${NAMA_BULAN_ID[kalenderBulanAktif]} ${kalenderTahunAktif}`;
 
         // Kumpulkan tanggal yang sudah ada booking untuk resource (lokasi+jenis lapangan) ini.
+        // Booking yang statusnya 'ditolak' TIDAK dihitung sebagai terpakai - disposisi
+        // yang ditolak berarti jadwal itu batal, jamnya harus kembali kosong/tersedia.
         const tanggalTerpakai = {}; // { 'YYYY-MM-DD': [{mulai, selesai}, ...] }
         daftarBookingTerakhir.forEach(function (b) {
-            if ((b.resourceKey || '') === resourceKey) {
+            if ((b.resourceKey || '') === resourceKey && b.statusSurat !== 'ditolak') {
                 if (!tanggalTerpakai[b.tanggal]) tanggalTerpakai[b.tanggal] = [];
                 tanggalTerpakai[b.tanggal].push({ mulai: b.mulai, selesai: b.selesai });
             }
@@ -1122,9 +1124,10 @@
         }
 
         // Cek bentrok jadwal berdasarkan sumber daya fisik (lokasi + jenis lapangan untuk GOR),
-        // memakai data booking terakhir yang sudah dimuat dari server.
+        // memakai data booking terakhir yang sudah dimuat dari server. Booking yang sudah
+        // 'ditolak' TIDAK dihitung bentrok - jadwalnya sudah batal/bebas dipakai lagi.
         for (const b of daftarBookingTerakhir) {
-            if ((b.resourceKey || '') === data.resourceKey && b.tanggal === data.tanggal) {
+            if ((b.resourceKey || '') === data.resourceKey && b.tanggal === data.tanggal && b.statusSurat !== 'ditolak') {
                 const exMulaiMenit = waktuKeMenit(b.mulai);
                 const exSelesaiMenit = waktuKeMenit(b.selesai);
                 if (mulaiMenit < exSelesaiMenit && selesaiMenit > exMulaiMenit) {
