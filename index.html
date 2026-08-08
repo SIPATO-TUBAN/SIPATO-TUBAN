@@ -14,7 +14,13 @@
             font-size: 14px; border: 1px solid #D0D5DD; border-radius: 8px; background: #fff; color: #1F2937;
         }
         input:focus, select:focus, textarea:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+        .form-hint { display: flex; gap: 6px; font-size: 12px; color: #667085; margin-top: -11px; margin-bottom: 15px; line-height: 1.5; }
+        .file-upload-box { border: 1.5px dashed #D0D5DD; border-radius: 10px; padding: 14px; background: #F9FAFB; margin-bottom: 6px; }
+        .file-upload-box input[type="file"] { margin: 0; border: none; padding: 4px 0; background: transparent; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .tabel-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; }
+        .tabel-scroll table { min-width: 1100px; }
         th, td { border-bottom: 1px solid #EEF1F6; padding: 10px 8px; text-align: left; font-size: 13px; }
         th { background-color: #F7F9FC; color: #5B6478; font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px; }
         button { cursor: pointer; padding: 9px 16px; border-radius: 8px; border: none; font-size: 13.5px; font-weight: 600; font-family: inherit; }
@@ -32,31 +38,43 @@
         .rekening-box { background: #f4f4f4; padding: 12px; border-radius: 6px; margin-bottom: 15px; }
         .rekening-box p { margin: 2px 0; }
         .ringkasan p { margin: 4px 0; }
-        .status-menunggu { color: #b8860b; font-weight: bold; }
-        .status-lunas { color: #28a745; font-weight: bold; }
-        .status-ditolak { color: #dc3545; font-weight: bold; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+        .badge-amber { background: #FEF3C7; color: #92400E; }
+        .badge-green { background: #DCFCE7; color: #15803D; }
+        .badge-red { background: #FEE2E2; color: #B91C1C; }
+        .badge-blue { background: #DBEAFE; color: #1D4ED8; }
+        .badge-gray { background: #F1F3F6; color: #667085; }
         .harga-info { font-size: 13px; color: #555; margin-top: -10px; margin-bottom: 15px; white-space: pre-line; }
         h2 { text-align: center; }
 
         /* --- dashboard awal (landing) --- */
-        .btn-menu { background-color: #6c757d; color: white; padding: 6px 14px; margin-bottom: 15px; }
+        .btn-menu { background: transparent; color: #5B6478; padding: 6px 4px; margin-bottom: 15px; font-weight: 600; font-size: 13px; }
+        .btn-menu:hover { color: #2563EB; }
 
         /* --- Kalender ketersediaan --- */
-        .kalender-box { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px; background: #fafafa; }
-        .kalender-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .kalender-nav button { background: #eee; padding: 4px 12px; font-size: 16px; }
-        .kalender-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .kalender-header-hari { text-align: center; font-size: 11px; font-weight: bold; color: #888; padding: 4px 0; }
-        .kalender-hari { text-align: center; padding: 8px 0; border-radius: 5px; font-size: 13px; cursor: pointer; }
-        .kalender-hari-kosong { background: #d4edda; color: #155724; }
-        .kalender-hari-kosong:hover { background: #b7e0c1; }
-        .kalender-hari-ada { background: #f8d7da; color: #721c24; }
-        .kalender-hari-ada:hover { background: #f1b0b7; }
-        .kalender-hari-lewat { background: #eee; color: #aaa; cursor: not-allowed; }
-        .kalender-legenda { display: flex; gap: 15px; margin-top: 10px; font-size: 12px; color: #555; }
-        .kalender-legenda .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
-        .dot-kosong { background: #28a745; }
-        .dot-ada { background: #dc3545; }
+        .kalender-box { border: 1px solid #E5E9F0; border-radius: 12px; padding: 16px; margin-bottom: 15px; background: #FAFBFD; }
+        .kalender-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .kalender-nav button { background: #EEF1F6; color: #344054; padding: 5px 14px; font-size: 16px; border-radius: 8px; }
+        .kalender-nav strong { font-size: 15px; color: #12213F; }
+        .kalender-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .kalender-header-hari { text-align: center; font-size: 10.5px; font-weight: 700; color: #98A2B3; padding: 4px 0; text-transform: uppercase; letter-spacing: .3px; }
+        .kalender-hari { text-align: center; padding: 10px 0; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform .1s; }
+        .kalender-hari:hover { transform: scale(1.06); }
+        .kalender-hari-kosong { background: #DCFCE7; color: #15803D; }
+        .kalender-hari-kosong:hover { background: #BBF7D0; }
+        .kalender-hari-ada { background: #FEE2E2; color: #B91C1C; }
+        .kalender-hari-ada:hover { background: #FECACA; }
+        .kalender-hari-lewat { background: transparent; color: #C7CDD9; cursor: not-allowed; }
+        .kalender-hari-lewat:hover { transform: none; }
+        .kalender-legenda { display: flex; gap: 15px; margin-top: 14px; font-size: 12px; color: #5B6478; }
+        .kalender-legenda .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+        .dot-kosong { background: #22C55E; }
+        .dot-ada { background: #EF4444; }
+        .kalender-tip {
+            display: flex; align-items: flex-start; gap: 12px; background: #EFF6FF; border: 1px solid #DBEAFE;
+            border-radius: 10px; padding: 13px 16px; margin-top: 16px; font-size: 12.5px; color: #1E40AF; line-height: 1.5;
+        }
+        .kalender-tip .ikon { font-size: 17px; flex-shrink: 0; }
 
         /* --- Statistik & Rekap Bulanan --- */
         .statistik-card { background: #f4f4f4; border-radius: 8px; padding: 12px 18px; min-width: 150px; }
@@ -91,7 +109,15 @@
         }
         .btn-wa-kontak { background-color: #25D366; color: #fff; padding: 8px 16px; white-space: nowrap; font-weight: 600; }
         .btn-wa-kontak:hover { background-color: #1ebe57; }
-        .pembayaran-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-top: 12px; background: #fff; }
+        .pembayaran-card { border: 1px solid #E5E9F0; border-radius: 12px; padding: 18px 20px; margin-top: 14px; background: #fff; }
+        .pembayaran-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+        .pembayaran-card-head h4 { margin: 0; font-size: 15px; color: #12213F; }
+        .pembayaran-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; padding: 14px; background: #F7F9FC; border-radius: 10px; }
+        .pembayaran-info-grid .label { font-size: 10.5px; color: #98A2B3; text-transform: uppercase; letter-spacing: .3px; margin-bottom: 2px; }
+        .pembayaran-info-grid .value { font-size: 13.5px; font-weight: 700; color: #1F2937; }
+        .qris-section { text-align: center; margin: 18px 0 6px; }
+        .qris-section h5 { font-size: 12.5px; font-weight: 700; color: #344054; margin-bottom: 10px; }
+        .qris-section img { max-width: 230px; width: 100%; border: 1px solid #E5E9F0; border-radius: 10px; padding: 8px; background: #fff; }
         .facility-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
         .chip {
             font-size: 12.5px; font-weight: 600; padding: 7px 14px; border-radius: 20px;
@@ -166,6 +192,23 @@
             padding: 6px 12px; border-radius: 20px; }
         .topbar-kompak .peran-badge.penyewa { background: #EEF2FF; color: #2563EB; }
         .topbar-kompak .peran-badge.admin { background: #E7F6F4; color: #0D9488; }
+        @media (max-width: 640px) {
+            body { margin: 10px; }
+            .form-grid-2 { grid-template-columns: 1fr; gap: 0; }
+            .hero-landing { padding: 40px 18px 30px; }
+            .hero-landing h1 { font-size: 34px; }
+            .peran-pilihan { flex-direction: column; align-items: center; }
+            .peran-kartu { max-width: 100%; width: 100%; }
+            .fitur-badge-row { flex-direction: column; }
+            .fitur-badge { min-width: 0; }
+            .tab-nav-penyewa { flex-wrap: nowrap; }
+            .tab-btn-penyewa { font-size: 11.5px; padding: 9px 8px; }
+            .tab-btn-penyewa .tab-no { display: none; }
+            .kalender-grid { gap: 3px; }
+            .kalender-hari { padding: 8px 0; font-size: 12px; }
+            .kontak-admin-bar { flex-direction: column; align-items: flex-start; }
+            .kontak-admin-bar button { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -250,6 +293,10 @@
                     </div>
                     <div id="kalenderDetailHari" style="display:none; margin-top:10px; font-size:13px;"></div>
                 </div>
+                <div class="kalender-tip">
+                    <span class="ikon">&#128197;</span>
+                    <span>Klik tanggal untuk melihat detail jam terpakai, atau ajukan izin langsung untuk tanggal tersebut.</span>
+                </div>
             </div>
         </div>
 
@@ -268,16 +315,18 @@
             <div class="box">
                 <h3>Ajukan Izin: Data Booking &amp; Surat Permohonan</h3>
                 <form id="bookingForm">
-                    <label>Nama:</label> <input type="text" id="nama" required>
-                    <label>Alamat:</label> <input type="text" id="alamat" required>
-                    <label>Nomor WhatsApp:</label> <input type="tel" id="wa" required>
-
-                    <label>Jabatan Pemohon:</label>
-                    <input type="text" id="jabatan" placeholder="Contoh: Ketua Umum, Manajer Klub, Kepala Unit">
+                    <div class="form-grid-2">
+                        <div><label>Nama:</label><input type="text" id="nama" required></div>
+                        <div><label>Alamat:</label><input type="text" id="alamat" required></div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div><label>Nomor WhatsApp:</label><input type="tel" id="wa" required></div>
+                        <div><label>Jabatan Pemohon:</label><input type="text" id="jabatan" placeholder="Contoh: Ketua Umum, Manajer Klub, Kepala Unit"></div>
+                    </div>
 
                     <label>Mengajukan Atas Nama Instansi/Lembaga/Klub? (opsional):</label>
                     <input type="text" id="institusi" placeholder="Kosongkan jika perseorangan. Isi HURUF BESAR, contoh: BUMI WALI FC">
-                    <p style="font-size:12px;color:#777;margin-top:-12px;">Isian ini akan otomatis dipakai untuk menyusun surat izin resmi - jadi tidak perlu diisi ulang oleh admin nanti.</p>
+                    <p class="form-hint">&#8505;&#65039; Isian ini akan otomatis dipakai untuk menyusun surat izin resmi - jadi tidak perlu diisi ulang oleh admin nanti.</p>
 
                     <label>Keperluan:</label>
                     <textarea id="keperluan" rows="2" required placeholder="Contoh: Latihan rutin tim futsal RT 05 dalam rangka HUT RI"></textarea>
@@ -318,8 +367,10 @@
                     </div>
 
                     <label>Upload Surat Permohonan Penyewaan (dari pemohon, untuk diajukan disposisi ke Kepala Dinas):</label>
-                    <input type="file" id="suratPenyewa" accept="application/pdf,image/*" required>
-                    <p style="font-size:12px;color:#777;margin-top:-12px;">Format PDF atau foto/scan surat, maksimal 3MB. Karena ini menyangkut sewa lahan/fasilitas milik pemerintah, surat ini perlu menunggu disposisi dari Kepala Dinas. Admin akan menghubungi Anda via WhatsApp untuk proses selanjutnya (termasuk arahan pembayaran).</p>
+                    <div class="file-upload-box">
+                        <input type="file" id="suratPenyewa" accept="application/pdf,image/*" required>
+                    </div>
+                    <p class="form-hint">&#128206; Format PDF atau foto/scan surat, maksimal 3MB. Karena ini menyangkut sewa lahan/fasilitas milik pemerintah, surat ini perlu menunggu disposisi dari Kepala Dinas. Admin akan menghubungi Anda via WhatsApp untuk proses selanjutnya (termasuk arahan pembayaran).</p>
 
                     <button type="submit">Kirim Surat Permohonan</button>
                 </form>
@@ -356,7 +407,7 @@
     <div id="slotAdmin"></div>
 
     <div id="daftarBookingBox" style="display:none;">
-        <button type="button" class="btn-menu" onclick="tampilkanLanding()">&larr; Kembali ke Menu</button>
+        <button type="button" class="btn-menu" id="btnKembaliDaftarBooking" onclick="tampilkanLanding()">&larr; Kembali ke Menu</button>
         <h3>Daftar Booking</h3>
         <button type="button" class="btn-download" id="btnDownload" style="display:none;" onclick="exportKeExcel()">Download Data (XLS/CSV)</button>
         <button type="button" class="btn-cancel" id="btnBersihkan" style="display:none;" onclick="bersihkanRiwayat()">&#129529; Bersihkan Riwayat (Tanggal Lewat)</button>
@@ -389,16 +440,18 @@
             </div>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>No</th><th>Nama</th><th>Alamat</th><th>WA</th><th>Keperluan</th><th>Lokasi</th><th>Jenis Lapangan / Penggunaan</th>
-                    <th>Tanggal</th><th>Jam</th><th>Durasi</th><th>Harga</th>
-                    <th>Status Disposisi</th><th>Status Balasan</th><th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="tabelBody"></tbody>
-        </table>
+        <div class="tabel-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th><th>Nama</th><th>Alamat</th><th>WA</th><th>Keperluan</th><th>Lokasi</th><th>Jenis Lapangan / Penggunaan</th>
+                        <th>Tanggal</th><th>Jam</th><th>Durasi</th><th>Harga</th>
+                        <th>Status Disposisi</th><th>Status Balasan</th><th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <input type="file" id="inputSuratBalasanGlobal" accept="application/pdf,image/*" style="display:none;">
@@ -490,6 +543,7 @@
         // menyalin), jadi semua fungsi/listener di dalamnya tetap jalan normal.
         document.getElementById('slotPenyewaTab3').appendChild(document.getElementById('daftarBookingBox'));
         document.getElementById('daftarBookingBox').style.display = 'block';
+        document.getElementById('btnKembaliDaftarBooking').style.display = 'none'; // sudah ada tombol kembali di atas sistem tab
         kalenderLokasiAktif = DAFTAR_LOKASI[0];
         kalenderJenisLapanganAktif = null;
         renderChipLokasi();
@@ -539,6 +593,7 @@
         // sana) ke slot khusus Admin, di luar sistem tab.
         document.getElementById('slotAdmin').appendChild(document.getElementById('daftarBookingBox'));
         document.getElementById('daftarBookingBox').style.display = 'block';
+        document.getElementById('btnKembaliDaftarBooking').style.display = 'inline-block';
         document.getElementById('btnDownload').style.display = 'inline-block';
         document.getElementById('btnBersihkan').style.display = 'inline-block';
         document.getElementById('btnAktifkanNotif').style.display = 'inline-block';
@@ -1618,19 +1673,31 @@
     function renderKartuPembayaran(b) {
         const namaLapangan = b.lokasi + (b.jenisLapangan ? ' - ' + b.jenisLapangan : '');
         const fileQris = QRIS_MAP[b.lokasi] || '';
-        const infoDasar = `<strong>${namaLapangan}</strong><br><span style="font-size:13px;color:#555;">${b.tanggal}, jam ${b.mulai} - ${b.selesai} - Total: ${formatRupiah(b.totalHarga)}</span>`;
+        const infoGrid = `
+            <div class="pembayaran-info-grid">
+                <div><div class="label">Lokasi</div><div class="value">${namaLapangan}</div></div>
+                <div><div class="label">Tanggal</div><div class="value">${b.tanggal}</div></div>
+                <div><div class="label">Jam</div><div class="value">${b.mulai} - ${b.selesai}</div></div>
+                <div><div class="label">Total Biaya</div><div class="value">${formatRupiah(b.totalHarga)}</div></div>
+            </div>`;
 
         // Sudah diverifikasi Admin -> tidak perlu tampil QRIS lagi
         if (b.statusBayar === 'lunas') {
-            return `<div class="pembayaran-card">${infoDasar}<p style="color:#155724;margin-top:10px;">&#9989; Pembayaran sudah diverifikasi Admin. Terima kasih!</p></div>`;
+            return `
+                <div class="pembayaran-card">
+                    <div class="pembayaran-card-head"><h4>${namaLapangan}</h4><span class="badge badge-green">LUNAS</span></div>
+                    ${infoGrid}
+                    <p style="color:#15803D;margin-top:14px;font-size:13px;">&#9989; Pembayaran sudah diverifikasi Admin. Terima kasih!</p>
+                </div>`;
         }
 
         // Sudah upload bukti, tinggal tunggu Admin cek -> tidak perlu tampil QRIS lagi
         if (b.statusBayar === 'menunggu_verifikasi') {
             return `
                 <div class="pembayaran-card">
-                    ${infoDasar}
-                    <p style="color:#856404;margin-top:10px;">&#8987; Bukti pembayaran Anda sudah kami terima, sedang menunggu diverifikasi Admin.</p>
+                    <div class="pembayaran-card-head"><h4>${namaLapangan}</h4><span class="badge badge-amber">MENUNGGU VERIFIKASI</span></div>
+                    ${infoGrid}
+                    <p style="color:#92400E;margin-top:14px;font-size:13px;">&#8987; Bukti pembayaran Anda sudah kami terima, sedang menunggu diverifikasi Admin.</p>
                     <button type="button" class="btn-wa-kontak" onclick='konfirmasiPembayaranWA(${JSON.stringify({ id: b.id, nama: b.nama, lokasi: namaLapangan, tanggal: b.tanggal }).replace(/'/g, "&apos;")})'>&#128241; Ingatkan Admin via WA</button>
                 </div>`;
         }
@@ -1639,13 +1706,15 @@
         const inputId = 'buktiPembayaranFile_' + b.id;
         return `
             <div class="pembayaran-card">
-                ${infoDasar}
-                <div style="text-align:center;margin:15px 0;">
-                    ${fileQris ? `<img src="${fileQris}" alt="QRIS ${b.lokasi}" style="max-width:260px;width:100%;border:1px solid #ddd;border-radius:8px;padding:8px;background:#fff;">`
-                               : '<p style="color:#c0392b;">QRIS untuk lokasi ini belum tersedia, hubungi Admin.</p>'}
+                <div class="pembayaran-card-head"><h4>${namaLapangan}</h4><span class="badge badge-red">BELUM LUNAS</span></div>
+                ${infoGrid}
+                <div class="qris-section">
+                    <h5>Scan QRIS untuk Pembayaran</h5>
+                    ${fileQris ? `<img src="${fileQris}" alt="QRIS ${b.lokasi}">`
+                               : '<p style="color:#c0392b;font-size:13px;">QRIS untuk lokasi ini belum tersedia, hubungi Admin.</p>'}
                 </div>
                 <label>Upload Bukti Pembayaran:</label>
-                <input type="file" id="${inputId}" accept="application/pdf,image/*">
+                <div class="file-upload-box"><input type="file" id="${inputId}" accept="application/pdf,image/*"></div>
                 <button type="button" onclick="uploadBuktiBayar('${b.id}', '${inputId}')" style="width:100%;">Upload Bukti Pembayaran</button>
             </div>`;
     }
@@ -1745,19 +1814,19 @@
             const row = document.createElement('tr');
             const jenisTampil = jenisTampilDari(b);
 
-            let statusSuratTeks = 'Menunggu Diproses Admin';
-            let statusSuratClass = 'status-menunggu';
-            if (b.statusSurat === 'divalidasi') { statusSuratTeks = 'Disposisi Diteruskan - Silakan Bayar via WA'; statusSuratClass = 'status-lunas'; }
+            let statusSuratTeks = '<span class="badge badge-amber">Menunggu Diproses Admin</span>';
+            if (b.statusSurat === 'divalidasi') {
+                statusSuratTeks = '<span class="badge badge-green">Disposisi Disetujui</span><br><span style="font-size:11px;color:#667085;">Silakan bayar via WA</span>';
+            }
             if (b.statusSurat === 'ditolak') {
-                statusSuratTeks = 'Disposisi Ditolak' + (b.alasanPenolakan ? `<br><span style="font-weight:normal;font-size:11px;">Alasan: ${b.alasanPenolakan}</span>` : '');
-                statusSuratClass = 'status-ditolak';
+                statusSuratTeks = '<span class="badge badge-red">Disposisi Ditolak</span>' + (b.alasanPenolakan ? `<br><span style="font-size:11px;color:#667085;">Alasan: ${b.alasanPenolakan}</span>` : '');
             }
 
-            let statusBalasanTeks = '-';
-            if (b.statusBalasan === 'diunggah') statusBalasanTeks = 'Sudah Diunggah, Siap Dikirim';
-            else if (b.statusBalasan === 'terkirim') statusBalasanTeks = 'Sudah Dikirim ke WA';
+            let statusBalasanTeks = '<span class="badge badge-gray">-</span>';
+            if (b.statusBalasan === 'diunggah') statusBalasanTeks = '<span class="badge badge-blue">Siap Dikirim</span>';
+            else if (b.statusBalasan === 'terkirim') statusBalasanTeks = '<span class="badge badge-green">Sudah Dikirim ke WA</span>';
             else if (b.statusSurat === 'divalidasi' && b.statusBalasan === 'na') {
-                statusBalasanTeks = 'Menunggu Surat Balasan Diunggah';
+                statusBalasanTeks = '<span class="badge badge-amber">Menunggu Diunggah</span>';
             }
 
             let aksiHtml;
@@ -1782,7 +1851,7 @@
                     aksiHtml += `<button type="button" class="btn-confirm" onclick="tandaiLunasBayar('${b.id}')">&#9989; Tandai Lunas</button>`;
                 }
                 if (b.statusBayar === 'lunas') {
-                    aksiHtml += `<span style="color:#155724;font-size:12px;font-weight:600;display:block;margin:4px 0;">&#9989; Sudah Lunas</span>`;
+                    aksiHtml += `<span class="badge badge-green" style="display:block;margin:4px 0;width:fit-content;">&#9989; Sudah Lunas</span>`;
                     if (b.buktiUrl) aksiHtml += `<button type="button" class="btn-lihat" onclick="lihatDokumen('${b.buktiUrl}')">Lihat Bukti Bayar</button>`;
                 }
                 if (b.suratBalasanUrl) {
@@ -1808,7 +1877,7 @@
                 <td>${b.mulai} - ${b.selesai}</td>
                 <td>${b.durasiString}</td>
                 <td>${formatRupiah(b.totalHarga)}</td>
-                <td class="status-surat-cell ${statusSuratClass}">${statusSuratTeks}</td>
+                <td class="status-surat-cell">${statusSuratTeks}</td>
                 <td class="status-balasan-cell">${statusBalasanTeks}</td>
                 <td class="aksi-cell">${aksiHtml}</td>
             `;
