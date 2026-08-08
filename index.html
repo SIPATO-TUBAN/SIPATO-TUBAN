@@ -20,7 +20,7 @@
         .file-upload-box input[type="file"] { margin: 0; border: none; padding: 4px 0; background: transparent; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         .tabel-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; }
-        .tabel-scroll table { min-width: 1100px; }
+        .tabel-lengkap { min-width: 1100px; }
         th, td { border-bottom: 1px solid #EEF1F6; padding: 10px 8px; text-align: left; font-size: 13px; }
         th { background-color: #F7F9FC; color: #5B6478; font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px; }
         button { cursor: pointer; padding: 9px 16px; border-radius: 8px; border: none; font-size: 13.5px; font-weight: 600; font-family: inherit; }
@@ -210,6 +210,7 @@
             .kontak-admin-bar button { width: 100%; }
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -402,12 +403,57 @@
         </div>
     </div>
 
-    <!-- Slot tempat #daftarBookingBox "diparkir" saat mode Admin (elemen yang sama
-         dipindah ke sini atau ke #slotPenyewaTab3 lewat JS, tergantung mode aktif) -->
-    <div id="slotAdmin"></div>
+    <!-- TAMPILAN ADMIN: Dashboard ringkasan + Daftar Booking (2 "halaman" via tab) -->
+    <div id="adminShellBox" style="display:none;">
+        <button type="button" class="btn-menu" onclick="tampilkanLanding()">&larr; Kembali ke Menu</button>
+        <div class="tab-nav-penyewa">
+            <button type="button" class="tab-btn-penyewa active" id="tabBtnAdmin1" onclick="gantiTabAdmin(1)">&#128202; Dashboard</button>
+            <button type="button" class="tab-btn-penyewa" id="tabBtnAdmin2" onclick="gantiTabAdmin(2)">&#128203; Daftar Booking</button>
+        </div>
+
+        <!-- HALAMAN 1: Dashboard ringkasan -->
+        <div class="tab-panel-penyewa active" id="tabPanelAdmin1">
+            <div id="dashboardRingkasan" style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px;"></div>
+
+            <div style="display:flex; gap:18px; flex-wrap:wrap; margin-bottom:18px;">
+                <div class="box" style="flex:2; min-width:320px;">
+                    <h3>Booking per Bulan</h3>
+                    <canvas id="chartBookingBulanan" height="130"></canvas>
+                </div>
+                <div class="box" style="flex:1; min-width:240px;">
+                    <h3>Booking per Lokasi</h3>
+                    <canvas id="chartBookingLokasi" height="200"></canvas>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:18px; flex-wrap:wrap;">
+                <div class="box" style="flex:2; min-width:320px;">
+                    <h3>Booking Terbaru</h3>
+                    <div class="tabel-scroll">
+                        <table>
+                            <thead><tr><th>Nama</th><th>Lokasi</th><th>Tanggal</th><th>Status</th></tr></thead>
+                            <tbody id="dashboardBookingTerbaru"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="box" style="flex:1; min-width:240px;">
+                    <h3>Aksi Cepat</h3>
+                    <button type="button" class="btn-forward" style="width:100%;margin-bottom:8px;" onclick="gantiTabAdmin(2)">&#128203; Lihat Semua Booking</button>
+                    <button type="button" class="btn-download" style="width:100%;margin-bottom:8px;margin-top:0;" onclick="exportKeExcel()">&#128190; Download Laporan</button>
+                    <button type="button" class="btn-cancel" style="width:100%;margin-bottom:8px;" onclick="bersihkanRiwayat()">&#129529; Bersihkan Riwayat</button>
+                    <button type="button" class="btn-forward" style="width:100%;" onclick="mintaIzinNotifikasiDesktop()">&#128276; Aktifkan Notifikasi</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HALAMAN 2: Daftar Booking (elemen daftarBookingBox dipindah ke sini lewat JS) -->
+        <div class="tab-panel-penyewa" id="tabPanelAdmin2">
+            <div id="slotAdminDaftarBooking"></div>
+        </div>
+    </div>
 
     <div id="daftarBookingBox" style="display:none;">
-        <button type="button" class="btn-menu" id="btnKembaliDaftarBooking" onclick="tampilkanLanding()">&larr; Kembali ke Menu</button>
+        <button type="button" class="btn-menu" id="btnKembaliDaftarBooking" onclick="tampilkanLanding()" style="display:none;">&larr; Kembali ke Menu</button>
         <h3>Daftar Booking</h3>
         <button type="button" class="btn-download" id="btnDownload" style="display:none;" onclick="exportKeExcel()">Download Data (XLS/CSV)</button>
         <button type="button" class="btn-cancel" id="btnBersihkan" style="display:none;" onclick="bersihkanRiwayat()">&#129529; Bersihkan Riwayat (Tanggal Lewat)</button>
@@ -441,7 +487,7 @@
         </div>
 
         <div class="tabel-scroll">
-            <table>
+            <table class="tabel-lengkap">
                 <thead>
                     <tr>
                         <th>No</th><th>Nama</th><th>Alamat</th><th>WA</th><th>Keperluan</th><th>Lokasi</th><th>Jenis Lapangan / Penggunaan</th>
@@ -503,6 +549,7 @@
         document.getElementById('landingBox').style.display = 'block';
         document.getElementById('topbarKompak').style.display = 'none';
         document.getElementById('penyewaTabsBox').style.display = 'none';
+        document.getElementById('adminShellBox').style.display = 'none';
         document.getElementById('daftarBookingBox').style.display = 'none';
         sesiAdminPassword = null; // "logout" - password sesi dilupakan saat kembali ke menu
         modeAksiAdmin = false;
@@ -528,6 +575,7 @@
         document.getElementById('peranBadge').className = 'peran-badge penyewa';
         document.getElementById('peranBadge').innerHTML = '&#128100; Penyewa';
         document.getElementById('penyewaTabsBox').style.display = 'block';
+        document.getElementById('adminShellBox').style.display = 'none';
         document.getElementById('btnDownload').style.display = 'none';
         document.getElementById('btnBersihkan').style.display = 'none';
         document.getElementById('btnAktifkanNotif').style.display = 'none';
@@ -589,11 +637,12 @@
         document.getElementById('peranBadge').className = 'peran-badge admin';
         document.getElementById('peranBadge').innerHTML = '&#9881;&#65039; Admin';
         document.getElementById('penyewaTabsBox').style.display = 'none';
+        document.getElementById('adminShellBox').style.display = 'block';
+        gantiTabAdmin(1); // selalu mulai dari halaman Dashboard tiap login
         // Pindahkan #daftarBookingBox keluar dari tab Penyewa (kalau sebelumnya di
-        // sana) ke slot khusus Admin, di luar sistem tab.
-        document.getElementById('slotAdmin').appendChild(document.getElementById('daftarBookingBox'));
+        // sana) ke halaman "Daftar Booking" di dalam shell Admin.
+        document.getElementById('slotAdminDaftarBooking').appendChild(document.getElementById('daftarBookingBox'));
         document.getElementById('daftarBookingBox').style.display = 'block';
-        document.getElementById('btnKembaliDaftarBooking').style.display = 'inline-block';
         document.getElementById('btnDownload').style.display = 'inline-block';
         document.getElementById('btnBersihkan').style.display = 'inline-block';
         document.getElementById('btnAktifkanNotif').style.display = 'inline-block';
@@ -607,6 +656,15 @@
         perbaruiTombolNotif();
         muatSemuaBooking();
         mulaiPolling();
+    }
+
+    // Pindah antar halaman di dashboard Admin (Dashboard ringkasan / Daftar Booking)
+    function gantiTabAdmin(nomor) {
+        for (let i = 1; i <= 2; i++) {
+            document.getElementById('tabBtnAdmin' + i).classList.toggle('active', i === nomor);
+            document.getElementById('tabPanelAdmin' + i).classList.toggle('active', i === nomor);
+        }
+        if (nomor === 1) renderDashboardAdmin();
     }
 
     // Dipakai di semua aksi admin: pakai password sesi kalau sudah login,
@@ -648,7 +706,10 @@
 
             daftarBookingTerakhir = data;
             terapkanFilterBooking();
-            if (modeAksiAdmin) renderStatistik();
+            if (modeAksiAdmin) {
+                renderStatistik();
+                renderDashboardAdmin();
+            }
         } catch (err) {
             if (!background) {
                 tabelBody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#c0392b;">Gagal memuat data. Cek koneksi internet, atau pastikan URL Web App masih aktif.</td></tr>';
@@ -1511,6 +1572,99 @@
     function muatUlangStatistik() {
         daftarBookingUntukStatistik = null;
         renderStatistik();
+    }
+
+    // ================== DASHBOARD RINGKASAN (khusus Admin) ==================
+    let chartBulananInstance = null;
+    let chartLokasiInstance = null;
+
+    async function renderDashboardAdmin() {
+        // Kartu ringkasan - dari data booking AKTIF saja (paling relevan utk "kondisi saat ini").
+        const skrg = new Date();
+        const bulanIni = `${skrg.getFullYear()}-${String(skrg.getMonth() + 1).padStart(2, '0')}`;
+        const bookingBulanIni = daftarBookingTerakhir.filter(function (b) { return String(b.tanggal || '').startsWith(bulanIni); });
+        const totalPendapatanBulanIni = bookingBulanIni.reduce(function (s, b) { return s + (Number(b.totalHarga) || 0); }, 0);
+        const jumlahMenunggu = daftarBookingTerakhir.filter(function (b) { return b.statusSurat === 'menunggu'; }).length;
+        const jumlahMenungguVerifikasi = daftarBookingTerakhir.filter(function (b) { return b.statusBayar === 'menunggu_verifikasi'; }).length;
+
+        document.getElementById('dashboardRingkasan').innerHTML = `
+            <div class="statistik-card"><div class="angka">${bookingBulanIni.length}</div><div class="label">Total Booking Bulan Ini</div></div>
+            <div class="statistik-card"><div class="angka">${formatRupiah(totalPendapatanBulanIni)}</div><div class="label">Pendapatan Bulan Ini</div></div>
+            <div class="statistik-card"><div class="angka">${jumlahMenunggu}</div><div class="label">Menunggu Disposisi</div></div>
+            <div class="statistik-card"><div class="angka">${jumlahMenungguVerifikasi}</div><div class="label">Menunggu Verifikasi Bayar</div></div>
+        `;
+
+        // Booking Terbaru - 5 booking dengan timestamp paling baru
+        const terbaru = daftarBookingTerakhir.slice()
+            .sort(function (a, b) { return (b.timestamp || '').localeCompare(a.timestamp || ''); })
+            .slice(0, 5);
+        document.getElementById('dashboardBookingTerbaru').innerHTML = terbaru.length === 0
+            ? '<tr><td colspan="4" style="text-align:center;color:#777;">Belum ada data booking.</td></tr>'
+            : terbaru.map(function (b) {
+                let badge = '<span class="badge badge-amber">Menunggu</span>';
+                if (b.statusSurat === 'divalidasi') badge = '<span class="badge badge-green">Disetujui</span>';
+                if (b.statusSurat === 'ditolak') badge = '<span class="badge badge-red">Ditolak</span>';
+                return `<tr><td>${b.nama}</td><td>${b.lokasi}</td><td>${b.tanggal}</td><td>${badge}</td></tr>`;
+            }).join('');
+
+        // Grafik pakai data gabungan aktif+arsip (sama seperti Statistik & Rekap
+        // Bulanan) supaya tren per bulan tetap representatif walau booking lama
+        // sudah dipindah lewat "Bersihkan Riwayat".
+        if (daftarBookingUntukStatistik === null) {
+            try {
+                const res = await fetch(API_URL + '?sertakanArsip=1');
+                daftarBookingUntukStatistik = await res.json();
+            } catch (err) {
+                console.error(err);
+                daftarBookingUntukStatistik = daftarBookingTerakhir; // fallback: data aktif saja
+            }
+        }
+        renderChartBookingBulanan(daftarBookingUntukStatistik);
+        renderChartBookingLokasi(daftarBookingUntukStatistik);
+    }
+
+    function renderChartBookingBulanan(data) {
+        const canvas = document.getElementById('chartBookingBulanan');
+        if (!canvas || typeof Chart === 'undefined') return;
+
+        // 6 bulan terakhir termasuk bulan berjalan
+        const now = new Date();
+        const labelBulan = [];
+        const keyBulan = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            keyBulan.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+            labelBulan.push(NAMA_BULAN_ID[d.getMonth()].slice(0, 3));
+        }
+        const jumlahPerBulan = keyBulan.map(function (key) {
+            return data.filter(function (b) { return String(b.tanggal || '').startsWith(key); }).length;
+        });
+
+        if (chartBulananInstance) chartBulananInstance.destroy();
+        chartBulananInstance = new Chart(canvas, {
+            type: 'bar',
+            data: { labels: labelBulan, datasets: [{ label: 'Booking', data: jumlahPerBulan, backgroundColor: '#2563EB', borderRadius: 6, maxBarThickness: 40 }] },
+            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+    }
+
+    function renderChartBookingLokasi(data) {
+        const canvas = document.getElementById('chartBookingLokasi');
+        if (!canvas || typeof Chart === 'undefined') return;
+
+        const perLokasi = {};
+        data.forEach(function (b) { perLokasi[b.lokasi] = (perLokasi[b.lokasi] || 0) + 1; });
+        const labels = Object.keys(perLokasi);
+        const angka = Object.values(perLokasi);
+        const warna = ['#2563EB', '#0D9488', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+
+        if (chartLokasiInstance) chartLokasiInstance.destroy();
+        if (labels.length === 0) return;
+        chartLokasiInstance = new Chart(canvas, {
+            type: 'doughnut',
+            data: { labels: labels, datasets: [{ data: angka, backgroundColor: warna }] },
+            options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 10.5 }, boxWidth: 10 } } } }
+        });
     }
 
     // ================== STATISTIK & REKAP BULANAN (khusus Admin) ==================
