@@ -48,8 +48,8 @@
         h2 { text-align: center; }
 
         /* --- dashboard awal (landing) --- */
-        .btn-menu { background: transparent; color: #5B6478; padding: 6px 4px; margin-bottom: 15px; font-weight: 600; font-size: 13px; }
-        .btn-menu:hover { color: #2563EB; }
+        .btn-menu { background: #EEF1F6; color: #344054; padding: 8px 16px; margin-bottom: 15px; font-weight: 700; font-size: 13px; border-radius: 8px; }
+        .btn-menu:hover { background: #E0E7FF; color: #2563EB; }
 
         /* --- Kalender ketersediaan --- */
         .kalender-box { border: 1px solid #E5E9F0; border-radius: 12px; padding: 16px; margin-bottom: 15px; background: #FAFBFD; }
@@ -107,7 +107,10 @@
             margin-top: 25px; padding: 14px 18px; background: #e9f7ef; border: 1px solid #bfe8cf;
             border-radius: 8px; font-size: 13.5px; color: #1e4d2b;
         }
-        .btn-wa-kontak { background-color: #25D366; color: #fff; padding: 8px 16px; white-space: nowrap; font-weight: 600; }
+        .kontak-admin-info { display: flex; flex-direction: column; gap: 4px; }
+        .kontak-nomor { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #1e4d2b; }
+        .wa-ikon { flex-shrink: 0; vertical-align: middle; }
+        .btn-wa-kontak { background-color: #25D366; color: #fff; padding: 8px 16px; white-space: nowrap; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; }
         .btn-wa-kontak:hover { background-color: #1ebe57; }
         .pembayaran-card { border: 1px solid #E5E9F0; border-radius: 12px; padding: 18px 20px; margin-top: 14px; background: #fff; }
         .pembayaran-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
@@ -398,8 +401,17 @@
 
         <!-- Bar kontak Admin - selalu tampil di bawah, di tab manapun -->
         <div class="kontak-admin-bar">
-            <span>&#10071; Ada kendala atau pertanyaan? Hubungi Admin langsung.</span>
-            <button type="button" class="btn-wa-kontak" onclick="hubungiAdminWA()">&#128241; Chat WA Admin</button>
+            <div class="kontak-admin-info">
+                <span>&#10071; Ada kendala atau pertanyaan? Hubungi Admin langsung.</span>
+                <span class="kontak-nomor">
+                    <svg class="wa-ikon" viewBox="0 0 24 24" width="15" height="15"><path fill="#25D366" d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.35 5.07L2 22l5.06-1.32A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.2-1.77 1.24-.46.05-.9.24-3.03-.63-2.57-1.06-4.22-3.7-4.35-3.87-.13-.17-1.04-1.38-1.04-2.63 0-1.25.66-1.86.89-2.11.23-.25.5-.31.67-.31.17 0 .34 0 .48.01.16.01.36-.06.56.43.22.53.73 1.83.8 1.96.06.13.1.28.02.45-.08.17-.13.28-.26.43-.13.15-.27.34-.39.46-.13.13-.26.27-.11.53.15.26.68 1.11 1.45 1.8 1 .89 1.83 1.17 2.09 1.3.26.13.41.11.56-.07.15-.18.64-.75.81-1 .17-.26.34-.21.56-.13.23.08 1.44.68 1.69.8.24.13.4.19.46.3.06.11.06.61-.16 1.23z"/></svg>
+                    <strong id="kontakNomorTampil"></strong>
+                </span>
+            </div>
+            <button type="button" class="btn-wa-kontak" onclick="hubungiAdminWA()">
+                <svg class="wa-ikon" viewBox="0 0 24 24" width="15" height="15"><path fill="#fff" d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.35 5.07L2 22l5.06-1.32A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.2-1.77 1.24-.46.05-.9.24-3.03-.63-2.57-1.06-4.22-3.7-4.35-3.87-.13-.17-1.04-1.38-1.04-2.63 0-1.25.66-1.86.89-2.11.23-.25.5-.31.67-.31.17 0 .34 0 .48.01.16.01.36-.06.56.43.22.53.73 1.83.8 1.96.06.13.1.28.02.45-.08.17-.13.28-.26.43-.13.15-.27.34-.39.46-.13.13-.26.27-.11.53.15.26.68 1.11 1.45 1.8 1 .89 1.83 1.17 2.09 1.3.26.13.41.11.56-.07.15-.18.64-.75.81-1 .17-.26.34-.21.56-.13.23.08 1.44.68 1.69.8.24.13.4.19.46.3.06.11.06.61-.16 1.23z"/></svg>
+                Chat WA Admin
+            </button>
         </div>
     </div>
 
@@ -1315,7 +1327,12 @@
     }
 
     // Nomor WA Admin/narahubung yang tampil di bar kontak bawah halaman Penyewa.
-    const NOMOR_WA_ADMIN = '6281997993134'; // +62 819-9799-3134
+    // >>> GANTI ketiga baris ini kalau nomor/nama narahubung berubah <<<
+    const NOMOR_WA_ADMIN = '6281997993134';                 // format 62xxx, dipakai utk link wa.me (JANGAN ada spasi/strip)
+    const NOMOR_WA_ADMIN_TAMPIL = '+62 819-9799-3134';      // format tampilan yang enak dibaca
+    const NAMA_ADMIN_WA = 'Rina Admin SI PATO';             // nama yang tampil di sebelah nomor
+    document.getElementById('kontakNomorTampil').textContent = `${NOMOR_WA_ADMIN_TAMPIL} a/n ${NAMA_ADMIN_WA}`;
+
     function hubungiAdminWA() {
         const pesan = 'Halo Admin SI PATO, saya ada pertanyaan/kendala terkait perizinan pemakaian tempat olahraga.';
         window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
@@ -1579,11 +1596,27 @@
     let chartLokasiInstance = null;
 
     async function renderDashboardAdmin() {
-        // Kartu ringkasan - dari data booking AKTIF saja (paling relevan utk "kondisi saat ini").
+        // Ambil data gabungan aktif+arsip DULU (sama seperti Statistik & Rekap
+        // Bulanan) - dipakai utk kartu "Total Booking/Pendapatan Bulan Ini" dan
+        // grafik, supaya angkanya SELALU sama persis dengan tab Daftar Booking
+        // walau ada booking bulan ini yang sudah keburu diarsipkan.
+        if (daftarBookingUntukStatistik === null) {
+            try {
+                const res = await fetch(API_URL + '?sertakanArsip=1');
+                daftarBookingUntukStatistik = await res.json();
+            } catch (err) {
+                console.error(err);
+                daftarBookingUntukStatistik = daftarBookingTerakhir; // fallback: data aktif saja
+            }
+        }
+
         const skrg = new Date();
         const bulanIni = `${skrg.getFullYear()}-${String(skrg.getMonth() + 1).padStart(2, '0')}`;
-        const bookingBulanIni = daftarBookingTerakhir.filter(function (b) { return String(b.tanggal || '').startsWith(bulanIni); });
+        const bookingBulanIni = daftarBookingUntukStatistik.filter(function (b) { return String(b.tanggal || '').startsWith(bulanIni); });
         const totalPendapatanBulanIni = bookingBulanIni.reduce(function (s, b) { return s + (Number(b.totalHarga) || 0); }, 0);
+        // "Menunggu Disposisi" & "Menunggu Verifikasi Bayar" sengaja dari data AKTIF
+        // saja (bukan gabungan) - ini soal apa yang perlu ditindaklanjuti SEKARANG,
+        // jadi wajar cuma menghitung booking yang masih ada di daftar aktif.
         const jumlahMenunggu = daftarBookingTerakhir.filter(function (b) { return b.statusSurat === 'menunggu'; }).length;
         const jumlahMenungguVerifikasi = daftarBookingTerakhir.filter(function (b) { return b.statusBayar === 'menunggu_verifikasi'; }).length;
 
@@ -1607,18 +1640,6 @@
                 return `<tr><td>${b.nama}</td><td>${b.lokasi}</td><td>${b.tanggal}</td><td>${badge}</td></tr>`;
             }).join('');
 
-        // Grafik pakai data gabungan aktif+arsip (sama seperti Statistik & Rekap
-        // Bulanan) supaya tren per bulan tetap representatif walau booking lama
-        // sudah dipindah lewat "Bersihkan Riwayat".
-        if (daftarBookingUntukStatistik === null) {
-            try {
-                const res = await fetch(API_URL + '?sertakanArsip=1');
-                daftarBookingUntukStatistik = await res.json();
-            } catch (err) {
-                console.error(err);
-                daftarBookingUntukStatistik = daftarBookingTerakhir; // fallback: data aktif saja
-            }
-        }
         renderChartBookingBulanan(daftarBookingUntukStatistik);
         renderChartBookingLokasi(daftarBookingUntukStatistik);
     }
